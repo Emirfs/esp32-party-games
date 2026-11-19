@@ -1,0 +1,9 @@
+{
+  "name": "oyun-kutusu-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/gzip.mjs"
+  }
+}
