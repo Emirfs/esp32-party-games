@@ -1,0 +1,15 @@
+# Firmware build output; sdkconfig is regenerated from sdkconfig.defaults
+firmware/.pio/
+firmware/sdkconfig
+firmware/sdkconfig.esp32-s3
+firmware/sdkconfig.old
+
+# Web
+web/node_modules/
+web/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
