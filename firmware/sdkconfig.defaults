@@ -1,0 +1,26 @@
+# Flash: works on any ESP32-S3 with >= 8 MB flash; N16R8 is the reference board.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# PSRAM: octal on N16R8. Boards without (or with quad) PSRAM still boot.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_IGNORE_NOTFOUND=y
+
+# SoftAP capacity: ESP32-S3 accepts 15 stations, but the default DHCP server
+# hands out only 8 leases; the 9th phone would join Wi-Fi and get no IP.
+CONFIG_LWIP_DHCPS_MAX_STATION_NUM=16
+# Soft-AP and ESP-NOW share the hardware key slots; ESP-NOW is unused.
+CONFIG_ESP_WIFI_ESPNOW_MAX_ENCRYPT_NUM=0
+
+# Sockets: one WebSocket per phone plus page-load HTTP connections.
+CONFIG_LWIP_MAX_SOCKETS=32
+CONFIG_LWIP_MAX_ACTIVE_TCP=32
+
+# HTTP server: WebSocket support; mobile browsers send long headers.
+CONFIG_HTTPD_WS_SUPPORT=y
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+CONFIG_HTTPD_MAX_URI_LEN=512
