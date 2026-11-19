@@ -170,11 +170,4 @@ The single source of the phase 0 protocol is `firmware/src/ws_hub.h`. Game messa
 
 ## 9. Phases
 
-| Phase | Deliverable | Verification |
-|---|---|---|
-| 0 | AP + captive portal + embedded web + WebSocket ping/presence test page | `docs/phase0-field-test.md` (Android + iPhone, lock/unlock, ≥ 9 phones, OTG power) |
-| 1 | Admin, profiles, lobby, table view, Wi-Fi QR, token reconnect, resume after power cut | Hands-on phone tests + engine tests on a PC |
-| 2 | Vampires & Villagers (4 roles) | Thousands of random games with 15 bots on a PC (every game ends, no rule violations) + a real game |
-| 3 | Add-on drivers (speaker, LED, OLED, button, battery), narration recordings, vibration patterns | Each add-on on/off on its own + a full game without add-ons |
-| 4 | Second game: Who's the Spy | Generality of the engine interface |
-| 5 | Open-source distribution: flashing from the browser (ESP Web Tools), release `.bin`s, build guide | Setting up a blank board with only a browser |
+Phases, tasks and exit criteria live in [roadmap.md](roadmap.md); the launch in [launch-plan.md](launch-plan.md).

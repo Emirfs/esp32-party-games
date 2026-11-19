@@ -1,6 +1,6 @@
 # AGENTS.md
 
-- Read `CONTEXT.md` first; design and rules live in `docs/design.md`.
+- Read `CONTEXT.md` first; design and rules live in `docs/design.md`, the current phase and its tasks in `docs/roadmap.md`.
 - Open source (MIT): no secrets, personal data or machine-specific paths in the repo.
 - English first. Code, identifiers, comments, commits, issues and PRs are English.
 - Bilingual UI: every player-facing string goes into both `en` and `tr` in `web/src/i18n.ts` (portal: the inline table in `web/public/portal.html`); English is the default and fallback.

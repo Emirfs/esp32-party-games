@@ -24,6 +24,7 @@ Phase 0 — connectivity. The firmware runs the access point, captive portal and
 WebSocket test page that measures what the rest of the design depends on:
 reconnect time after a phone screen lock, 15-phone capacity, phone USB power.
 Field-test checklist: [docs/phase0-field-test.md](docs/phase0-field-test.md).
+What comes next: [docs/roadmap.md](docs/roadmap.md).
 
 ## Build and flash
 

@@ -158,11 +158,4 @@ Faz 0 protokolünün tek kaynağı `firmware/src/ws_hub.h`. Oyun mesajları (Faz
 
 ## 9. Fazlar
 
-| Faz | Teslim | Doğrulama |
-|---|---|---|
-| 0 | AP + captive portal + gömülü web + WebSocket ping/presence test sayfası | `docs/phase0-field-test.tr.md` (Android + iPhone, kilit/açılış, ≥ 9 telefon, OTG gücü) |
-| 1 | Yönetici, profil, lobi, masa görünümü, Wi-Fi QR, token ile yeniden bağlanma, güç kesintisinde devam | Telefonlarla el testi + PC'de motor testleri |
-| 2 | Vampir Köylü (4 rol) | PC'de 15 bot ile binlerce rastgele oyun (her oyun biter, kural ihlali yok) + gerçek oyun |
-| 3 | Eklenti sürücüleri (hoparlör, LED, OLED, buton, pil), anlatıcı kayıtları, titreşim desenleri | Her eklenti tek başına açık/kapalı + eklentisiz tam oyun |
-| 4 | İkinci oyun: Casus Kim | Motor arayüzünün genelliği |
-| 5 | Açık kaynak dağıtımı: tarayıcıdan flaşlama (ESP Web Tools), sürüm `.bin`'leri, kurulum rehberi | Temiz bir kartı yalnız tarayıcıyla kurmak |
+Fazlar, görevleri ve bitiş ölçütleri [roadmap.tr.md](roadmap.tr.md)'de; duyuru [launch-plan.tr.md](launch-plan.tr.md)'de.

@@ -26,6 +26,7 @@ Faz 0 — bağlantı. Firmware erişim noktasını, captive portalı ve tasarım
 dayandığı şeyleri ölçen WebSocket test sayfasını çalıştırır: telefon ekranı
 kilitlenip açılınca yeniden bağlanma süresi, 15 telefon kapasitesi, telefondan
 USB güç. Saha testi listesi: [docs/phase0-field-test.tr.md](docs/phase0-field-test.tr.md).
+Sırada ne var: [docs/roadmap.tr.md](docs/roadmap.tr.md).
 
 ## Derleme ve yükleme
 

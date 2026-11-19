@@ -30,8 +30,10 @@ TypeScript, UI in English (default) and Turkish. Design and rules:
 | `web/src/app.tsx` | Phase 0 connection test page | — |
 | `web/public/portal.html` | Captive portal page, bilingual, copied verbatim by Vite | `config.h` address, `i18n.ts` language rule |
 | `web/scripts/gzip.mjs` | `dist/*.html` → `.html.gz` | `EMBED_FILES` list |
-| `docs/design.md` (+ `.tr.md`) | Design, add-on/pin plan, game rules, phases | Translation in the same commit |
+| `docs/design.md` (+ `.tr.md`) | Design, add-on/pin plan, game rules | Translation in the same commit |
 | `docs/phase0-field-test.md` (+ `.tr.md`) | Phone field test steps and result tables | Translation in the same commit |
+| `docs/roadmap.md` (+ `.tr.md`) | Single source for phases, tasks, status and exit criteria | Tick tasks in the same commit as the work; translation too |
+| `docs/launch-plan.md` (+ `.tr.md`) | Launch prerequisites, channels and order | Translation in the same commit |
 
 ## Contracts (single source)
 
