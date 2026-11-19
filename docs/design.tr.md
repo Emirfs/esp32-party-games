@@ -1,8 +1,11 @@
-# Oyun Kutusu — Tasarım
+# ESP32 Party Games — Tasarım
+
+> Bu belge [design.md](design.md)'nin Türkçe çevirisidir; esas metin İngilizcedir.
 
 ESP32-S3 üzerinde, internetsiz ve uygulamasız oynanan masa oyunu kutusu. Açık
 kaynak (MIT): herkes kendi kartıyla kurabilsin diye tek firmware, isteğe bağlı
-donanım.
+donanım. Arayüz İngilizce ve Türkçe: telefonun dili Türkçeyse Türkçe, değilse
+İngilizce açılır; oyuncu EN/TR düğmesiyle değiştirebilir.
 
 ## 1. İki kurulum, tek firmware
 
@@ -40,7 +43,7 @@ telefon. Bunun için üç ayar şart (`firmware/sdkconfig.defaults`):
 
 ## 3. Bağlanma
 
-- Kutu `OyunKutusu-XXXX` ağını açar (WPA2, varsayılan şifre `oyunkutusu`;
+- Kutu `PartyGames-XXXX` ağını açar (WPA2, varsayılan şifre `partygames`;
   yönetici değiştirebilir). Yönetici telefonu (veya OLED) Wi-Fi QR kodunu gösterir.
 - Sahte DNS her adı `192.168.4.1`'e çözer; telefonun "internet var mı" yoklaması
   portal sayfasına düşer, işletim sistemi giriş penceresini açar.
@@ -157,7 +160,7 @@ Faz 0 protokolünün tek kaynağı `firmware/src/ws_hub.h`. Oyun mesajları (Faz
 
 | Faz | Teslim | Doğrulama |
 |---|---|---|
-| 0 | AP + captive portal + gömülü web + WebSocket ping/presence test sayfası | `docs/faz0-saha-testi.md` (Android + iPhone, kilit/açılış, ≥ 9 telefon, OTG gücü) |
+| 0 | AP + captive portal + gömülü web + WebSocket ping/presence test sayfası | `docs/phase0-field-test.tr.md` (Android + iPhone, kilit/açılış, ≥ 9 telefon, OTG gücü) |
 | 1 | Yönetici, profil, lobi, masa görünümü, Wi-Fi QR, token ile yeniden bağlanma, güç kesintisinde devam | Telefonlarla el testi + PC'de motor testleri |
 | 2 | Vampir Köylü (4 rol) | PC'de 15 bot ile binlerce rastgele oyun (her oyun biter, kural ihlali yok) + gerçek oyun |
 | 3 | Eklenti sürücüleri (hoparlör, LED, OLED, buton, pil), anlatıcı kayıtları, titreşim desenleri | Her eklenti tek başına açık/kapalı + eklentisiz tam oyun |

@@ -1,13 +1,15 @@
 # Faz 0 — Saha testi
 
+> Bu belge [phase0-field-test.md](phase0-field-test.md)'nin Türkçe çevirisidir; esas metin İngilizcedir.
+
 Amaç: tasarımın dayandığı dört varsayımı gerçek telefonlarla ölçmek. Sonuçlar
 Faz 1'in yeniden bağlanma, portal ve güç kararlarını belirler.
 
 ## Hazırlık
 
 1. `cd firmware && pio run -t upload && pio device monitor`
-2. Logda `SoftAP "OyunKutusu-XXXX" up` ve `listening on http://192.168.4.1` görünmeli.
-3. Wi-Fi: `OyunKutusu-XXXX`, şifre `oyunkutusu`.
+2. Logda `SoftAP "PartyGames-XXXX" up` ve `listening on http://192.168.4.1` görünmeli.
+3. Wi-Fi: `PartyGames-XXXX`, şifre `partygames`.
 4. Test sayfası `http://192.168.4.1`: bağlantı durumu, gecikme, yeniden bağlanma,
    "Ekran açılınca" süresi, masadakiler, kutu durumu, olay günlüğü.
 
@@ -45,6 +47,11 @@ kapatma ayarını ve pil düşüşünü not et.
 ### 5. Titreşim
 
 "Titreşimi dene": Android'de titremeli; iPhone'da "desteklemiyor" yazmalı.
+
+### 6. Dil
+
+Telefon dili Türkçeyse sayfa ve portal Türkçe, değilse İngilizce açılmalı.
+EN/TR seçimi sayfa yenilenince ve portalda korunmalı.
 
 ## Sonuç tablosu
 
