@@ -1,5 +1,5 @@
 {
-  "name": "oyun-kutusu-web",
+  "name": "esp32-party-games-web",
   "private": true,
   "type": "module",
   "scripts": {

@@ -4,9 +4,9 @@
 
 namespace cfg {
 
-constexpr char kSsidPrefix[] = "OyunKutusu-";
+constexpr char kSsidPrefix[] = "PartyGames-";
 // Shared table password, printed in the docs; it keeps passers-by out, not attackers.
-constexpr char kApPassword[] = "oyunkutusu";
+constexpr char kApPassword[] = "partygames";
 constexpr uint8_t kApChannel = 6;
 // ESP32-S3 SoftAP hardware limit; the admin phone counts as one station.
 constexpr uint8_t kMaxStations = 15;
