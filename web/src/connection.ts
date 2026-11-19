@@ -1,10 +1,19 @@
 // Phase 0 link to the box: hello/ping/presence over /ws plus the reconnect
-// timings the field test is about (see docs/faz0-saha-testi.md).
+// timings the field test is about (see docs/phase0-field-test.md).
 
 export interface Peer {
   id: string;
   rtt: number;
   age: number;
+}
+
+export type LogEvent = 'connected' | 'reconnected' | 'lost' | 'pongTimeout' | 'resumed';
+
+/** Language-neutral; the UI renders it in the current language. */
+export interface LogEntry {
+  at: number;
+  event: LogEvent;
+  ms?: number;
 }
 
 export interface LinkState {
@@ -16,7 +25,7 @@ export interface LinkState {
   /** Page became visible -> first pong, last occurrence. */
   resumeMs: number | null;
   peers: Peer[];
-  log: string[];
+  log: LogEntry[];
 }
 
 const PING_EVERY_MS = 3000;
@@ -25,7 +34,7 @@ const MAX_BACKOFF_MS = 4000;
 const LOG_LINES = 30;
 
 export function clientId(): string {
-  const key = 'ok.clientId';
+  const key = 'pg.clientId';
   let id = localStorage.getItem(key);
   if (!id) {
     // crypto.randomUUID needs a secure context; the box is plain http.
@@ -77,10 +86,8 @@ export class Link {
     ws?.close();
   }
 
-  private update(patch: Partial<LinkState>, logLine?: string): void {
-    const log = logLine
-      ? [`${new Date().toLocaleTimeString('tr-TR')} ${logLine}`, ...this.state.log].slice(0, LOG_LINES)
-      : this.state.log;
+  private update(patch: Partial<LinkState>, event?: LogEvent, ms?: number): void {
+    const log = event ? [{ at: Date.now(), event, ms }, ...this.state.log].slice(0, LOG_LINES) : this.state.log;
     this.state = { ...this.state, ...patch, log };
     this.onChange(this.state);
   }
@@ -94,17 +101,17 @@ export class Link {
     ws.onopen = () => {
       this.backoffMs = 500;
       const patch: Partial<LinkState> = { status: 'open' };
-      let line = 'bağlandı';
+      let event: LogEvent = 'connected';
       if (this.everOpened) {
         patch.reconnects = this.state.reconnects + 1;
         if (this.lostAt !== null) {
           patch.lastGapMs = Math.round(performance.now() - this.lostAt);
-          line = `yeniden bağlandı (${patch.lastGapMs} ms kopukluk)`;
+          event = 'reconnected';
         }
       }
       this.everOpened = true;
       this.lostAt = null;
-      this.update(patch, line);
+      this.update(patch, event, patch.lastGapMs ?? undefined);
       ws.send(JSON.stringify({ t: 'hello', id: this.id }));
       this.ping();
     };
@@ -115,14 +122,14 @@ export class Link {
         const now = performance.now();
         window.clearTimeout(this.pongTimer);
         this.pongTimer = undefined;
-        const patch: Partial<LinkState> = { rttMs: Math.round(now - msg.c) };
-        let line: string | undefined;
+        const rttMs = Math.round(now - msg.c);
         if (this.visibleAt !== null) {
-          patch.resumeMs = Math.round(now - this.visibleAt);
-          line = `ekran açıldı, ${patch.resumeMs} ms sonra canlı`;
+          const resumeMs = Math.round(now - this.visibleAt);
           this.visibleAt = null;
+          this.update({ rttMs, resumeMs }, 'resumed', resumeMs);
+        } else {
+          this.update({ rttMs });
         }
-        this.update(patch, line);
       } else if (msg.t === 'presence') {
         this.update({ peers: msg.clients });
       }
@@ -130,14 +137,14 @@ export class Link {
 
     ws.onclose = () => {
       // Failed reconnect attempts close too; only a live socket going away is news.
-      this.drop(ws, this.state.status === 'open' ? 'bağlantı koptu' : undefined, this.backoffMs);
+      this.drop(ws, this.state.status === 'open' ? 'lost' : undefined, this.backoffMs);
       this.backoffMs = Math.min(this.backoffMs * 2, MAX_BACKOFF_MS);
     };
   }
 
   // Abandons a socket without waiting for its close handshake, which can hang
   // for a long time when the box already dropped a sleeping phone.
-  private drop(ws: WebSocket, line: string | undefined, retryInMs: number): void {
+  private drop(ws: WebSocket, event: LogEvent | undefined, retryInMs: number): void {
     if (this.ws !== ws) return;
     this.ws = null;
     window.clearTimeout(this.pongTimer);
@@ -145,7 +152,7 @@ export class Link {
     this.lostAt ??= performance.now();
     ws.onclose = null;
     ws.close();
-    this.update({ status: 'closed' }, line);
+    this.update({ status: 'closed' }, event);
     this.retryTimer = window.setTimeout(() => this.connect(), retryInMs);
   }
 
@@ -155,7 +162,7 @@ export class Link {
     ws.send(JSON.stringify({ t: 'ping', c: Math.round(performance.now()), rtt: this.state.rttMs ?? -1 }));
     this.pongTimer ??= window.setTimeout(() => {
       this.pongTimer = undefined;
-      this.drop(ws, 'pong gelmedi, bağlantı yenileniyor', 0);
+      this.drop(ws, 'pongTimeout', 0);
     }, PONG_TIMEOUT_MS);
   }
 
