@@ -28,7 +28,7 @@ constexpr char kTag[] = "http";
 httpd_handle_t g_server = nullptr;
 
 // Captive-portal acceptance. A phone is sent to the portal until it taps
-// "Oyuna gir"; afterwards its OS connectivity probes get the success answer, so
+// "Play"; afterwards its OS connectivity probes get the success answer, so
 // the OS closes the captive sheet and keeps the network. Keyed by MAC (phones
 // use a stable per-network MAC): a phone that re-joins stays accepted, and a new
 // phone that inherits a recycled IP does not. Touched only on the httpd task.

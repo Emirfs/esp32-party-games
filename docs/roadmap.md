@@ -10,10 +10,10 @@ before the launch (phase 4); add-ons and new games come after it.
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0 | Connectivity: AP, captive portal, WebSocket test page | Code done, field test open |
-| 1 | Lobby, profiles, admin, game engine skeleton | Not started |
-| 2 | Vampires & Villagers | Not started |
-| 3 | Distribution: browser flasher, releases, README | Not started |
+| 0 | Connectivity: AP, captive portal, WebSocket test page (now `#diag`) | Code done, field test open |
+| 1 | Lobby, profiles, admin, game engine skeleton | Code done; exit check needs real phones |
+| 2 | Vampires & Villagers | Code done, simulator passes; real game open |
+| 3 | Distribution: browser flasher, releases, README | Code done; issues, `main` and first tag open |
 | 4 | Launch | Not started |
 | 5 | Optional add-ons | Not started |
 | 6 | More games | Not started |
@@ -33,44 +33,45 @@ before the launch (phase 4); add-ons and new games come after it.
 ## Phase 1 — Lobby, profiles, admin
 
 Firmware (`firmware/src/core/`, game logic free of ESP-IDF so it runs on a PC):
-- [ ] Protocol v1 in `ws_hub.h`: `hello{id}`, `profile{name, avatar}`, `ready`, `start{game, options}`, `view{seq, view}` (each phone gets only its own full view), `err{code}`
-- [ ] Session: player id ↔ socket; a new socket with the same id replaces the old one
-- [ ] Profiles in NVS: name, avatar emoji, colour, stats
-- [ ] Lobby: player list, ready state, kick
-- [ ] Admin: first "Become admin" wins, transfer to another phone, reset by holding BOOT (GPIO0) for 5 s
-- [ ] Admin settings: Wi-Fi password, game options, timers
-- [ ] Engine skeleton: `Game` interface (design §5), phase ids, timers, state snapshot to NVS at every phase change, resume after a power cut
-- [ ] PlatformIO `native` env with unit tests for `core/`
+- [x] Protocol v1 ([protocol.md](protocol.md), summary in `ws_hub.h`): `hello{id}`, `profile{name, avatar, color}`, `ready`, `start{game, options}`, `view{seq, view}` (each phone gets only its own full view), `err{code}`, admin requests
+- [x] Session: player id ↔ socket; a new socket with the same id replaces the old one (`core/hub.*`)
+- [x] Profiles in NVS: name, avatar emoji, colour, stats (32 phones remembered, LRU)
+- [x] Lobby: player list, ready state, kick; a full room reuses an offline member's seat
+- [x] Admin: first "Become admin" wins, transfer to another phone, reset by holding BOOT (GPIO0) for 5 s
+- [x] Admin settings: Wi-Fi password (applied after restart), game options, timers
+- [x] Engine skeleton: `Game` interface (design §5), phase ids, timers, state snapshot to NVS at every phase change, resume after a power cut
+- [x] PlatformIO `native` env with unit tests for `core/`; `host` env + `npm run sim` to run the UI without a board
 
 Web:
-- [ ] Screens chosen by `view.type`: profile, lobby, admin tab, table view
-- [ ] Wi-Fi QR (`WIFI:T:WPA;S:…;P:…;;`) and URL QR on the admin phone
-- [ ] Keep the screen on (silent looping video; Wake Lock needs HTTPS)
-- [ ] Vibration helper for `buzz{pattern}` (Android only; screen flash on iPhone)
-- [ ] Every new string in both `en` and `tr`
+- [x] Screens chosen from the view: profile, lobby, admin tab, table view
+- [x] Wi-Fi QR (`WIFI:T:WPA;S:…;P:…;;`) and URL QR on the admin phone
+- [x] Keep the screen on (silent looping video; Wake Lock needs HTTPS)
+- [x] Vibration helper for `buzz{p}` (Android; screen flash on iPhone)
+- [x] Every new string in both `en` and `tr`
 
 **Exit:** 6+ phones join and set profiles, the admin starts a placeholder game;
 lock/unlock keeps each player's identity; a power cut returns everyone to the same lobby.
 
 ## Phase 2 — Vampires & Villagers
 
-- [ ] Rules from design §8: Vampire, Villager, Doctor, Seer; role counts per player count
-- [ ] Simultaneous night with a task for everyone; night lasts 25–60 s regardless of speed
-- [ ] Vampires see each other's picks live; ties broken randomly
-- [ ] Resolution order: protect → kill → seer result; doctor cannot repeat a target
-- [ ] Dawn, discussion (admin can end early), hidden-then-revealed vote, one tie-break round, verdict, win check
-- [ ] Options: reveal role on lynch, ghosts see roles, discussion length, suspicion stats
-- [ ] UI: hold-to-reveal role card, night task screens, vote, results; table view for the admin
-- [ ] Bot simulator in the `native` env: thousands of random games with 5–15 bots; every game ends, no rule is broken
+- [x] Rules from design §8: Vampire, Villager, Doctor, Seer; role counts per player count
+- [x] Simultaneous night with a task for everyone; night lasts 25–60 s regardless of speed
+- [x] Vampires see each other's picks live; ties broken randomly
+- [x] Resolution order: protect → kill → seer result; doctor cannot repeat a target
+- [x] Dawn, discussion (admin can end early), hidden-then-revealed vote, one tie-break round, verdict, win check
+- [x] Options: reveal role on lynch, ghosts see roles, discussion length, vote length, suspicion stats
+- [x] UI: hold-to-reveal role card, night task screens, vote, results; table view (with optional spoken narration) for the admin
+- [x] Bot simulator in the `native` env: 5000 random games with 5–15 bots; every game ends, no rule is broken
 
 **Exit:** simulator passes; a full real game with friends.
 
 ## Phase 3 — Distribution (before launch)
 
-- [ ] GitHub Actions: build web + firmware; on a tag publish a merged `.bin` (bootloader + partitions + app) to Releases
-- [ ] GitHub Pages flasher with ESP Web Tools; "Flash from browser" button in the README
-- [ ] README: hero GIF/video at the top, 2-minute quick start, social preview image
-- [ ] `CONTRIBUTING.md`, "Add your own game" guide, a few `good first issue`s
+- [x] GitHub Actions: build web + firmware + native tests; on a tag publish a merged `.bin` (bootloader + partitions + app) to Releases
+- [x] GitHub Pages flasher with ESP Web Tools; "Flash from browser" button in the README
+- [x] README: hero image at the top (`docs/media/hero.png`), 2-minute quick start, social preview image (`docs/media/social-preview.png`, set it in the repo settings); the real-table video comes with the launch filming
+- [x] `CONTRIBUTING.md`, "Add your own game" guide ([add-a-game.md](add-a-game.md))
+- [ ] A few `good first issue`s on GitHub
 - [ ] Merge the feature branch into `main` and make `main` the default branch
 
 **Exit:** a blank board is set up with nothing but a browser.

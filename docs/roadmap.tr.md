@@ -10,10 +10,10 @@ Fazların, görevlerinin ve bitiş ölçütlerinin tek kaynağı. Tasarım ve ku
 
 | Faz | Hedef | Durum |
 |---|---|---|
-| 0 | Bağlantı: AP, captive portal, WebSocket test sayfası | Kod bitti, saha testi açık |
-| 1 | Lobi, profiller, yönetici, oyun motoru iskeleti | Başlanmadı |
-| 2 | Vampir Köylü | Başlanmadı |
-| 3 | Dağıtım: tarayıcıdan yükleme, sürümler, README | Başlanmadı |
+| 0 | Bağlantı: AP, captive portal, WebSocket test sayfası (artık `#diag`) | Kod bitti, saha testi açık |
+| 1 | Lobi, profiller, yönetici, oyun motoru iskeleti | Kod bitti; bitiş kontrolü gerçek telefon ister |
+| 2 | Vampir Köylü | Kod bitti, simülatör geçiyor; gerçek oyun açık |
+| 3 | Dağıtım: tarayıcıdan yükleme, sürümler, README | Kod bitti; issue'lar, `main` ve ilk etiket açık |
 | 4 | Duyuru | Başlanmadı |
 | 5 | İsteğe bağlı eklentiler | Başlanmadı |
 | 6 | Yeni oyunlar | Başlanmadı |
@@ -33,44 +33,45 @@ Fazların, görevlerinin ve bitiş ölçütlerinin tek kaynağı. Tasarım ve ku
 ## Faz 1 — Lobi, profiller, yönetici
 
 Firmware (`firmware/src/core/`; oyun mantığı ESP-IDF'e bağlı değil, PC'de çalışır):
-- [ ] `ws_hub.h`'de protokol v1: `hello{id}`, `profile{name, avatar}`, `ready`, `start{game, options}`, `view{seq, view}` (her telefon yalnızca kendi tam görünümünü alır), `err{code}`
-- [ ] Oturum: oyuncu kimliği ↔ soket; aynı kimlikle gelen yeni soket eskisinin yerini alır
-- [ ] NVS'te profiller: ad, emoji avatar, renk, istatistik
-- [ ] Lobi: oyuncu listesi, hazır durumu, oyuncu çıkarma
-- [ ] Yönetici: "Yönetici ol"a ilk basan olur, başka telefona devredilir, BOOT (GPIO0) 5 sn basılı tutulunca sıfırlanır
-- [ ] Yönetici ayarları: Wi-Fi şifresi, oyun seçenekleri, süreler
-- [ ] Motor iskeleti: `Game` arayüzü (tasarım §5), aşama kimlikleri, zamanlayıcılar, her aşama geçişinde durumun NVS'e yazılması, güç kesintisinden sonra devam
-- [ ] `core/` için birim testleriyle PlatformIO `native` ortamı
+- [x] Protokol v1 ([protocol.tr.md](protocol.tr.md), özeti `ws_hub.h`'de): `hello{id}`, `profile{name, avatar, color}`, `ready`, `start{game, options}`, `view{seq, view}` (her telefon yalnızca kendi tam görünümünü alır), `err{code}`, yönetici istekleri
+- [x] Oturum: oyuncu kimliği ↔ soket; aynı kimlikle gelen yeni soket eskisinin yerini alır (`core/hub.*`)
+- [x] NVS'te profiller: ad, emoji avatar, renk, istatistik (32 telefon hatırlanır, en eski kullanılan silinir)
+- [x] Lobi: oyuncu listesi, hazır durumu, oyuncu çıkarma; oda doluysa çevrimdışı bir üyenin yeri kullanılır
+- [x] Yönetici: "Yönetici ol"a ilk basan olur, başka telefona devredilir, BOOT (GPIO0) 5 sn basılı tutulunca sıfırlanır
+- [x] Yönetici ayarları: Wi-Fi şifresi (yeniden başlatınca geçerli), oyun seçenekleri, süreler
+- [x] Motor iskeleti: `Game` arayüzü (tasarım §5), aşama kimlikleri, zamanlayıcılar, her aşama geçişinde durumun NVS'e yazılması, güç kesintisinden sonra devam
+- [x] `core/` için birim testleriyle PlatformIO `native` ortamı; kartsız arayüz için `host` ortamı + `npm run sim`
 
 Web:
-- [ ] `view.type`'a göre ekranlar: profil, lobi, yönetici sekmesi, masa görünümü
-- [ ] Yönetici telefonunda Wi-Fi QR (`WIFI:T:WPA;S:…;P:…;;`) ve adres QR'ı
-- [ ] Ekranı açık tutma (sessiz döngü video; Wake Lock HTTPS ister)
-- [ ] `buzz{pattern}` için titreşim yardımcısı (yalnız Android; iPhone'da ekran yanıp söner)
-- [ ] Her yeni metin hem `en` hem `tr`'de
+- [x] Görünüme göre ekranlar: profil, lobi, yönetici sekmesi, masa görünümü
+- [x] Yönetici telefonunda Wi-Fi QR (`WIFI:T:WPA;S:…;P:…;;`) ve adres QR'ı
+- [x] Ekranı açık tutma (sessiz döngü video; Wake Lock HTTPS ister)
+- [x] `buzz{p}` için titreşim yardımcısı (Android; iPhone'da ekran yanıp söner)
+- [x] Her yeni metin hem `en` hem `tr`'de
 
 **Bitiş:** 6+ telefon katılıp profil oluşturur, yönetici deneme oyununu başlatır;
 kilit/açılışta her oyuncunun kimliği korunur; elektrik kesilince herkes aynı lobiye döner.
 
 ## Faz 2 — Vampir Köylü
 
-- [ ] Tasarım §8 kuralları: Vampir, Köylü, Doktor, Gözcü; oyuncu sayısına göre rol sayıları
-- [ ] Herkesin görevi olan eş zamanlı gece; gece hızdan bağımsız 25–60 sn sürer
-- [ ] Vampirler birbirinin seçimini canlı görür; eşitlik rastgele bozulur
-- [ ] Çözüm sırası: koruma → öldürme → gözcü sonucu; doktor aynı hedefi tekrarlayamaz
-- [ ] Şafak, tartışma (yönetici erken bitirebilir), önce gizli sonra açık oylama, tek eşitlik turu, hüküm, kazanma kontrolü
-- [ ] Seçenekler: linçte rol açıklama, ruhlar rolleri görür, tartışma süresi, şüphe istatistiği
-- [ ] Arayüz: basılı tutunca görünen rol kartı, gece görev ekranları, oylama, sonuçlar; yönetici için masa görünümü
-- [ ] `native` ortamda bot simülatörü: 5–15 botla binlerce rastgele oyun; her oyun biter, hiçbir kural bozulmaz
+- [x] Tasarım §8 kuralları: Vampir, Köylü, Doktor, Gözcü; oyuncu sayısına göre rol sayıları
+- [x] Herkesin görevi olan eş zamanlı gece; gece hızdan bağımsız 25–60 sn sürer
+- [x] Vampirler birbirinin seçimini canlı görür; eşitlik rastgele bozulur
+- [x] Çözüm sırası: koruma → öldürme → gözcü sonucu; doktor aynı hedefi tekrarlayamaz
+- [x] Şafak, tartışma (yönetici erken bitirebilir), önce gizli sonra açık oylama, tek eşitlik turu, hüküm, kazanma kontrolü
+- [x] Seçenekler: linçte rol açıklama, ruhlar rolleri görür, tartışma süresi, oylama süresi, şüphe istatistiği
+- [x] Arayüz: basılı tutunca görünen rol kartı, gece görev ekranları, oylama, sonuçlar; yönetici için masa görünümü (isteğe bağlı sesli anlatım)
+- [x] `native` ortamda bot simülatörü: 5–15 botla 5000 rastgele oyun; her oyun biter, hiçbir kural bozulmaz
 
 **Bitiş:** simülatör geçer; arkadaşlarla tam bir gerçek oyun.
 
 ## Faz 3 — Dağıtım (duyurudan önce)
 
-- [ ] GitHub Actions: web + firmware derlemesi; etiket atılınca birleşik `.bin` (bootloader + bölümler + uygulama) Releases'a
-- [ ] ESP Web Tools ile GitHub Pages yükleme sayfası; README'de "Flash from browser" düğmesi
-- [ ] README: en üstte GIF/video, 2 dakikalık hızlı başlangıç, paylaşım kapak görseli
-- [ ] `CONTRIBUTING.md`, "Kendi oyununu ekle" rehberi, birkaç `good first issue`
+- [x] GitHub Actions: web + firmware derlemesi + native testler; etiket atılınca birleşik `.bin` (bootloader + bölümler + uygulama) Releases'a
+- [x] ESP Web Tools ile GitHub Pages yükleme sayfası; README'de "Flash from browser" düğmesi
+- [x] README: en üstte kapak görseli (`docs/media/hero.png`), 2 dakikalık hızlı başlangıç, paylaşım kapak görseli (`docs/media/social-preview.png`, depo ayarlarından seçilir); gerçek masa videosu duyuru çekimiyle gelir
+- [x] `CONTRIBUTING.md`, "Kendi oyununu ekle" rehberi ([add-a-game.tr.md](add-a-game.tr.md))
+- [ ] GitHub'da birkaç `good first issue`
 - [ ] Özellik dalını `main`'e birleştir ve `main`'i varsayılan dal yap
 
 **Bitiş:** boş bir kart yalnızca tarayıcıyla kurulur.

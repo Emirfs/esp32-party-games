@@ -1,21 +1,165 @@
 // UI strings. English is the default and the fallback; Turkish is chosen when
-// the phone's language is Turkish or the player picks it.
+// the phone's language is Turkish or the player picks it (`pg.lang`, shared
+// with web/public/portal.html).
 
 export type Lang = 'en' | 'tr';
 
 const LANG_KEY = 'pg.lang';
 
 const en = {
-  subtitle: 'Connection test · device {id}',
+  // Connection
   status_connecting: 'Connecting…',
   status_open: 'Connected',
   status_closed: 'Disconnected',
+  connectingHint: "Make sure this phone is on the box's Wi-Fi.",
+
+  // Common
+  you: 'you',
+  player: 'Player {n}',
+  nobody: 'Nobody',
+  back: 'Back',
+  save: 'Save',
+  admin: 'admin',
+  offline: 'offline',
+  inGame: 'playing',
+  dead: 'dead',
+
+  // Profile
+  profileTitle: 'Who are you?',
+  editProfile: 'Edit profile',
+  name: 'Name',
+  namePlaceholder: 'Your name',
+  avatar: 'Avatar',
+  color: 'Colour',
+  join: 'Join',
+  roomFull: 'The room is full (15 players).',
+  stats: 'Played {p} · Won {w}',
+
+  // Lobby
+  tab_lobby: 'Lobby',
+  tab_card: 'My card',
+  tab_table: 'Table',
+  tab_admin: 'Admin',
+  players: 'Players ({n})',
+  readyQ: 'Playing the next game?',
+  ready: "I'm in",
+  notReady: 'Sit out',
+  becomeAdmin: 'Become admin',
+  noAdmin: 'Nobody runs the box yet.',
+  waitAdmin: 'Waiting for the admin to start a game.',
+  gameRunning: 'A game is in progress. You are watching the table.',
+
+  // Admin
+  game: 'Game',
+  game_vampires: 'Vampires & Villagers',
+  options: 'Options',
+  opt_revealRole: "Reveal a lynched player's role",
+  opt_ghostsSeeRoles: 'Ghosts see every role',
+  opt_suspicion: 'Show suspicion at dawn',
+  opt_discussionSec: 'Discussion (seconds)',
+  opt_voteSec: 'Vote (seconds)',
+  start: 'Start · {n} ready',
+  needPlayers: 'Needs {min}–{max} ready players.',
+  skip: 'Skip phase',
+  endGame: 'End game',
+  backToLobby: 'Back to lobby',
+  confirmEnd: 'End the game for everyone? It will not count in the stats.',
+  kick: 'Kick',
+  confirmKick: 'Remove {name} from the room?',
+  makeAdmin: 'Make admin',
+  confirmTransfer: 'Hand admin rights to {name}?',
+  joinBox: 'Join the box',
+  qrWifi: '1. Wi-Fi',
+  qrUrl: '2. Open the game',
+  wifiPass: 'Wi-Fi password',
+  wifiHint: '8–63 characters. Takes effect after a restart.',
+  restart: 'Restart box',
+  confirmRestart: 'Restart the box? Everyone disconnects for a moment.',
+  diagnostics: 'Connection diagnostics',
+
+  // Errors (`err` codes)
+  err_hello_first: 'Not connected yet, try again.',
+  err_bad_msg: 'The box did not understand that.',
+  err_no_profile: 'Create your profile first.',
+  err_bad_name: 'Name must be 1–16 characters.',
+  err_bad_avatar: 'Pick an avatar.',
+  err_bad_color: 'Pick a colour.',
+  err_room_full: 'The room is full.',
+  err_not_admin: 'Only the admin can do that.',
+  err_admin_taken: 'Someone is already the admin.',
+  err_bad_pid: 'That player is no longer here.',
+  err_in_game: 'Not while a game is running.',
+  err_no_game: 'No game is running.',
+  err_bad_game: 'Unknown game.',
+  err_too_few: 'Not enough ready players.',
+  err_too_many: 'Too many ready players.',
+  err_bad_pass: 'The password must be 8–63 plain characters.',
+  err_late: 'Too late, the phase has changed.',
+  err_bad_target: 'You cannot pick that player.',
+  err_not_allowed: 'That is not allowed right now.',
+  err_unknown: 'Error: {code}',
+
+  // Vampires & Villagers
+  phase_role: 'Role card',
+  phase_night: 'Night {n}',
+  phase_dawn: 'Dawn',
+  phase_discussion: 'Discussion',
+  phase_vote: 'Vote',
+  phase_verdict: 'Verdict',
+  phase_end: 'Game over',
+  role_vampire: 'Vampire',
+  role_villager: 'Villager',
+  role_doctor: 'Doctor',
+  role_seer: 'Seer',
+  roleDesc_vampire: 'Each night, agree with the other vampires on a victim. You win when the vampires are as many as everyone else alive.',
+  roleDesc_villager: 'Find the vampires and lynch them in the vote. At night, mark the player you suspect.',
+  roleDesc_doctor: 'Each night, protect one player from the vampires; yourself too, but never the same player two nights in a row.',
+  roleDesc_seer: 'Each night, learn whether one player is a vampire.',
+  holdToSee: 'Hold to see your role',
+  holdRole: 'Hold to see my role',
+  gotIt: 'Got it',
+  ackCount: '{n}/{total} ready',
+  fellowVampires: 'Fellow vampires',
+  task_kill: 'Choose a victim',
+  task_protect: 'Protect someone',
+  task_inspect: 'Inspect someone',
+  task_suspect: 'Who do you suspect?',
+  taskHint: 'You can change your pick until the night ends.',
+  nightWait: 'The night passes…',
+  seen: 'What you have seen',
+  isVampire: 'vampire',
+  notVampire: 'not a vampire',
+  died: '{name} died tonight.',
+  nobodyDied: 'Nobody died tonight.',
+  suspicion: 'Suspicion',
+  endDiscussion: 'End discussion',
+  voteTitle: 'Who should be lynched?',
+  runoffTitle: 'Runoff: only the tied players',
+  votesCast: '{n}/{total} voted',
+  voteHint: 'You can change your vote until the votes are revealed.',
+  lynched: '{name} was lynched.',
+  wasRole: '{name} was a {role}.',
+  nobodyLynched: 'Nobody was lynched.',
+  runoff: 'Tie! One more vote between the tied players.',
+  votes: 'Votes',
+  noVotes: 'Nobody voted.',
+  win_village: 'The village wins!',
+  win_vampires: 'The vampires win!',
+  waitLobby: 'Waiting for the admin to return to the lobby.',
+  ghost: 'You are a ghost. Watch, but stay quiet.',
+  ghostNoVote: 'Ghosts do not vote.',
+  chose: '{n}/{total} chose',
+  narration: 'Narrate phases aloud',
+  say_role: 'Look at your role cards.',
+  say_night: 'Night {n}. Make your choices.',
+  say_discussion: 'Discuss! Who is the vampire?',
+  say_vote: 'Time to vote.',
+
+  // Diagnostics (#diag)
   latency: 'Latency',
   reconnects: 'Reconnects',
   lastGap: 'Last outage',
   resume: 'After screen on',
-  atTable: 'At the table ({n})',
-  secondsAgo: '{n} s ago',
   box: 'Box',
   network: 'Network',
   wifiWs: 'Wi-Fi / WebSocket',
@@ -39,9 +183,9 @@ const en = {
   statusUnavailable: 'Status unavailable',
   vibration: 'Vibration',
   tryVibration: 'Try vibration',
-  vibeUnsupported: 'This browser does not support vibration',
+  vibeUnsupported: 'This browser does not support vibration; the screen flashes instead',
   vibeSent: 'Vibration sent',
-  vibeRefused: 'The browser refused to vibrate',
+  vibeRefused: 'The browser refused to vibrate; the screen flashes instead',
   events: 'Events',
   log_connected: 'connected',
   log_reconnected: 'reconnected ({ms} ms outage)',
@@ -53,16 +197,151 @@ const en = {
 export type Key = keyof typeof en;
 
 const tr: Record<Key, string> = {
-  subtitle: 'Bağlantı testi · cihaz {id}',
   status_connecting: 'Bağlanıyor…',
   status_open: 'Bağlı',
   status_closed: 'Koptu',
+  connectingHint: 'Telefonun kutunun Wi-Fi ağına bağlı olsun.',
+
+  you: 'sen',
+  player: 'Oyuncu {n}',
+  nobody: 'Kimse',
+  back: 'Geri',
+  save: 'Kaydet',
+  admin: 'yönetici',
+  offline: 'çevrimdışı',
+  inGame: 'oyunda',
+  dead: 'ölü',
+
+  profileTitle: 'Sen kimsin?',
+  editProfile: 'Profili düzenle',
+  name: 'İsim',
+  namePlaceholder: 'Adın',
+  avatar: 'Avatar',
+  color: 'Renk',
+  join: 'Katıl',
+  roomFull: 'Oda dolu (15 oyuncu).',
+  stats: 'Oynadı {p} · Kazandı {w}',
+
+  tab_lobby: 'Lobi',
+  tab_card: 'Kartım',
+  tab_table: 'Masa',
+  tab_admin: 'Yönetici',
+  players: 'Oyuncular ({n})',
+  readyQ: 'Sıradaki oyunda var mısın?',
+  ready: 'Varım',
+  notReady: 'Yokum',
+  becomeAdmin: 'Yönetici ol',
+  noAdmin: 'Kutunun henüz yöneticisi yok.',
+  waitAdmin: 'Yöneticinin oyunu başlatması bekleniyor.',
+  gameRunning: 'Bir oyun sürüyor. Masayı izliyorsun.',
+
+  game: 'Oyun',
+  game_vampires: 'Vampir Köylü',
+  options: 'Ayarlar',
+  opt_revealRole: 'Asılanın rolü açıklansın',
+  opt_ghostsSeeRoles: 'Hayaletler tüm rolleri görsün',
+  opt_suspicion: 'Şafakta şüpheler gösterilsin',
+  opt_discussionSec: 'Tartışma (saniye)',
+  opt_voteSec: 'Oylama (saniye)',
+  start: 'Başlat · {n} hazır',
+  needPlayers: '{min}–{max} hazır oyuncu gerekir.',
+  skip: 'Aşamayı geç',
+  endGame: 'Oyunu bitir',
+  backToLobby: 'Lobiye dön',
+  confirmEnd: 'Oyun herkes için bitsin mi? İstatistiklere sayılmaz.',
+  kick: 'Çıkar',
+  confirmKick: '{name} odadan çıkarılsın mı?',
+  makeAdmin: 'Yönetici yap',
+  confirmTransfer: 'Yöneticilik {name} adlı oyuncuya devredilsin mi?',
+  joinBox: 'Kutuya katıl',
+  qrWifi: '1. Wi-Fi',
+  qrUrl: '2. Oyunu aç',
+  wifiPass: 'Wi-Fi şifresi',
+  wifiHint: '8–63 karakter. Yeniden başlatınca geçerli olur.',
+  restart: 'Kutuyu yeniden başlat',
+  confirmRestart: 'Kutu yeniden başlatılsın mı? Herkesin bağlantısı kısa süre kopar.',
+  diagnostics: 'Bağlantı tanılama',
+
+  err_hello_first: 'Henüz bağlanmadı, tekrar dene.',
+  err_bad_msg: 'Kutu bu isteği anlamadı.',
+  err_no_profile: 'Önce profilini oluştur.',
+  err_bad_name: 'İsim 1–16 karakter olmalı.',
+  err_bad_avatar: 'Bir avatar seç.',
+  err_bad_color: 'Bir renk seç.',
+  err_room_full: 'Oda dolu.',
+  err_not_admin: 'Bunu sadece yönetici yapabilir.',
+  err_admin_taken: 'Zaten bir yönetici var.',
+  err_bad_pid: 'Bu oyuncu artık burada değil.',
+  err_in_game: 'Oyun sürerken olmaz.',
+  err_no_game: 'Süren bir oyun yok.',
+  err_bad_game: 'Bilinmeyen oyun.',
+  err_too_few: 'Yeterince hazır oyuncu yok.',
+  err_too_many: 'Hazır oyuncu sayısı fazla.',
+  err_bad_pass: 'Şifre 8–63 düz karakter olmalı.',
+  err_late: 'Geç kaldın, aşama değişti.',
+  err_bad_target: 'Bu oyuncuyu seçemezsin.',
+  err_not_allowed: 'Bu şu an yapılamaz.',
+  err_unknown: 'Hata: {code}',
+
+  phase_role: 'Rol kartı',
+  phase_night: '{n}. gece',
+  phase_dawn: 'Şafak',
+  phase_discussion: 'Tartışma',
+  phase_vote: 'Oylama',
+  phase_verdict: 'Karar',
+  phase_end: 'Oyun bitti',
+  role_vampire: 'Vampir',
+  role_villager: 'Köylü',
+  role_doctor: 'Doktor',
+  role_seer: 'Kâhin',
+  roleDesc_vampire: 'Her gece diğer vampirlerle bir kurbanda anlaşın. Vampirler yaşayan diğer herkes kadar olunca kazanırsınız.',
+  roleDesc_villager: 'Vampirleri bulun ve oylamada asın. Gece şüphelendiğin oyuncuyu işaretle.',
+  roleDesc_doctor: 'Her gece bir oyuncuyu vampirlerden koru; kendini de koruyabilirsin ama aynı kişiyi üst üste iki gece koruyamazsın.',
+  roleDesc_seer: 'Her gece bir oyuncunun vampir olup olmadığını öğren.',
+  holdToSee: 'Rolünü görmek için basılı tut',
+  holdRole: 'Rolümü görmek için basılı tut',
+  gotIt: 'Anladım',
+  ackCount: '{n}/{total} hazır',
+  fellowVampires: 'Diğer vampirler',
+  task_kill: 'Kurbanı seç',
+  task_protect: 'Birini koru',
+  task_inspect: 'Birini incele',
+  task_suspect: 'Kimden şüpheleniyorsun?',
+  taskHint: 'Gece bitene kadar seçimini değiştirebilirsin.',
+  nightWait: 'Gece geçiyor…',
+  seen: 'Gördüklerin',
+  isVampire: 'vampir',
+  notVampire: 'vampir değil',
+  died: '{name} bu gece öldü.',
+  nobodyDied: 'Bu gece kimse ölmedi.',
+  suspicion: 'Şüpheler',
+  endDiscussion: 'Tartışmayı bitir',
+  voteTitle: 'Kim asılsın?',
+  runoffTitle: 'Eşitlik turu: sadece berabere kalanlar',
+  votesCast: '{n}/{total} oy verdi',
+  voteHint: 'Oylar açılana kadar oyunu değiştirebilirsin.',
+  lynched: '{name} asıldı.',
+  wasRole: '{name} bir {role} idi.',
+  nobodyLynched: 'Kimse asılmadı.',
+  runoff: 'Beraberlik! Berabere kalanlar arasında bir tur daha.',
+  votes: 'Oylar',
+  noVotes: 'Kimse oy vermedi.',
+  win_village: 'Köy kazandı!',
+  win_vampires: 'Vampirler kazandı!',
+  waitLobby: 'Yöneticinin lobiye dönmesi bekleniyor.',
+  ghost: 'Artık bir hayaletsin. İzle ama sessiz kal.',
+  ghostNoVote: 'Hayaletler oy vermez.',
+  chose: '{n}/{total} seçti',
+  narration: 'Aşamaları sesli anlat',
+  say_role: 'Rol kartlarınıza bakın.',
+  say_night: '{n}. gece. Seçimlerinizi yapın.',
+  say_discussion: 'Tartışın! Vampir kim?',
+  say_vote: 'Oylama zamanı.',
+
   latency: 'Gecikme',
   reconnects: 'Yeniden bağlanma',
   lastGap: 'Son kopukluk',
   resume: 'Ekran açılınca',
-  atTable: 'Masadakiler ({n})',
-  secondsAgo: '{n} sn önce',
   box: 'Kutu',
   network: 'Ağ',
   wifiWs: 'Wi-Fi / WebSocket',
@@ -86,9 +365,9 @@ const tr: Record<Key, string> = {
   statusUnavailable: 'Durum alınamadı',
   vibration: 'Titreşim',
   tryVibration: 'Titreşimi dene',
-  vibeUnsupported: 'Bu tarayıcı titreşimi desteklemiyor',
+  vibeUnsupported: 'Bu tarayıcı titreşimi desteklemiyor; onun yerine ekran yanıp söner',
   vibeSent: 'Titreşim gönderildi',
-  vibeRefused: 'Tarayıcı titreşimi reddetti',
+  vibeRefused: 'Tarayıcı titreşimi reddetti; onun yerine ekran yanıp söner',
   events: 'Olaylar',
   log_connected: 'bağlandı',
   log_reconnected: 'yeniden bağlandı ({ms} ms kopukluk)',
@@ -99,20 +378,33 @@ const tr: Record<Key, string> = {
 
 const STRINGS: Record<Lang, Record<Key, string>> = { en, tr };
 
-export function isKey(key: string): key is Key {
-  return key in en;
-}
-
-export function initialLang(): Lang {
+function initialLang(): Lang {
   const saved = localStorage.getItem(LANG_KEY);
   if (saved === 'en' || saved === 'tr') return saved;
   return navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 }
 
-export function saveLang(lang: Lang): void {
-  localStorage.setItem(LANG_KEY, lang);
+let current: Lang = initialLang();
+
+export function lang(): Lang {
+  return current;
 }
 
-export function translate(lang: Lang, key: Key, params: Record<string, string | number> = {}): string {
-  return STRINGS[lang][key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? ''));
+/** Saves the choice; the caller re-renders the app. */
+export function setLang(next: Lang): void {
+  current = next;
+  localStorage.setItem(LANG_KEY, next);
+}
+
+export function isKey(key: string): key is Key {
+  return key in en;
+}
+
+export function t(key: Key, params: Record<string, string | number> = {}): string {
+  return STRINGS[current][key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? ''));
+}
+
+/** Translates `<prefix><id>` when that key exists, otherwise returns `fallback`. */
+export function tOr(key: string, fallback: string, params?: Record<string, string | number>): string {
+  return isKey(key) ? t(key, params) : fallback;
 }

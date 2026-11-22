@@ -10,17 +10,18 @@ Faz 1'in yeniden bağlanma, portal ve güç kararlarını belirler.
 1. `cd firmware && pio run -t upload && pio device monitor`
 2. Logda `SoftAP "PartyGames-XXXX" up` ve `listening on http://192.168.4.1` görünmeli.
 3. Wi-Fi: `PartyGames-XXXX`, şifre `partygames`.
-4. Test sayfası `http://192.168.4.1`: bağlantı durumu, gecikme, yeniden bağlanma,
-   "Ekran açılınca" süresi, masadakiler, kutu durumu, olay günlüğü.
+4. Test sayfası `http://192.168.4.1/#diag` (oyun `http://192.168.4.1`'de açılır;
+   yönetici sekmesinde bağlantısı var): bağlantı durumu, gecikme, yeniden
+   bağlanma, "Ekran açılınca" süresi, kutu durumu, olay günlüğü. Masadakiler lobide.
 
 ## Testler
 
 ### 1. Portal ve ağda kalma (her işletim sistemi için)
 
 - Ağa bağlan → giriş penceresi kendiliğinden açılıyor mu?
-- "Oyuna gir" → test sayfası açılıyor mu? Pencere "Bitti/Done" gösteriyor mu?
+- "Oyuna gir" → oyun açılıyor mu? Pencere "Bitti/Done" gösteriyor mu?
 - **Mobil veri açıkken** sayfa çalışıyor mu? Android "sınırlı bağlantı" / "internet yok" uyarısı veriyor mu, ağdan çıkıyor mu?
-- Tarayıcıyı kapatıp `http://192.168.4.1` yeniden açılınca "cihaz" kimliği aynı mı (kimlik kalıcı mı)?
+- Tarayıcıyı kapatıp `http://192.168.4.1` yeniden açılınca telefon profiliyle doğrudan lobiye dönüyor mu (kimlik kalıcı mı)?
 
 ### 2. Ekran kilidi ve arka plan
 

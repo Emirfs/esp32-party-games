@@ -1,164 +1,211 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
-import { clientId, Link, type LinkState } from './connection';
-import { initialLang, isKey, type Key, type Lang, saveLang, translate } from './i18n';
+// Root: owns the link to the box and picks the screen from the latest view
+// (docs/protocol.md "View"): profile, lobby, game, plus the admin's tabs.
 
-interface BoxStatus {
-  ssid: string;
-  version: string;
-  uptimeMs: number;
-  resetReason: number;
-  heapFree: number;
-  heapMin: number;
-  psramFree: number;
-  psramTotal: number;
-  stations: number;
-  wsClients: number;
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { AdminTab, DEFAULT_VAMPIRES } from './admin';
+import { Board, narration, PhaseHeader, SeatList } from './board';
+import { clientId, initialLinkState, Link, type LinkState } from './connection';
+import { buzz, keepScreenOn, speak } from './device';
+import { Diag } from './diag';
+import { type Lang, lang, setLang, t, tOr } from './i18n';
+import { Lobby } from './lobby';
+import { ProfileScreen } from './profile';
+import type { GameView, VampiresOptions, View } from './types';
+import { type AppCtx, Ctx, type Send } from './ui';
+import { VampiresScreen } from './vampires';
+
+type Tab = 'main' | 'table' | 'admin';
+
+interface Toast {
+  id: number;
+  text: string;
 }
 
 const LANGS: Lang[] = ['en', 'tr'];
+const TOAST_MS = 3500;
 
-function kb(bytes: number): string {
-  return `${Math.round(bytes / 1024)} KB`;
+/** Fills in what a box (or a future protocol) might leave out, so screens can trust the shape. */
+function normalize(v: Partial<View>): View {
+  return {
+    ...v,
+    me: v.me ?? -1,
+    profile: v.profile ?? null,
+    admin: v.admin ?? -1,
+    isAdmin: !!v.isAdmin,
+    full: !!v.full,
+    players: v.players ?? [],
+    games: v.games ?? [],
+    endsIn: typeof v.endsIn === 'number' ? v.endsIn : -1,
+  };
 }
 
-function ms(v: number | null): string {
-  return v === null ? '–' : `${v} ms`;
+function GameScreen({ g }: { g: GameView }) {
+  if (g.id === 'vampires') return <VampiresScreen g={g} />;
+  return (
+    <section class="card">
+      <PhaseHeader g={g} />
+      <SeatList seats={g.players} />
+    </section>
+  );
 }
+
+let toastIds = 0;
 
 export function App() {
   const id = useMemo(clientId, []);
-  const [lang, setLang] = useState<Lang>(initialLang);
-  const [link, setLink] = useState<LinkState | null>(null);
-  const [box, setBox] = useState<BoxStatus | null>(null);
-  const [vibe, setVibe] = useState<Key | null>(null);
-  const t = (key: Key, params?: Record<string, string | number>) => translate(lang, key, params);
+  const [, rerender] = useState<Lang>(lang());
+  const [link, setLink] = useState<LinkState>(initialLinkState);
+  const [snap, setSnap] = useState<{ view: View; deadline: number | null } | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [hash, setHash] = useState(location.hash);
+  const [tab, setTab] = useState<Tab>('main');
+  const [editing, setEditing] = useState(false);
+  const [narrate, setNarrate] = useState(false);
+  const [opts, setOpts] = useState<VampiresOptions>(DEFAULT_VAMPIRES);
+  const linkRef = useRef<Link | null>(null);
+  const spokenPhase = useRef(-1);
 
   useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+    document.documentElement.lang = lang();
+    keepScreenOn();
+    const onHash = () => setHash(location.hash);
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   useEffect(() => {
-    const l = new Link(id, setLink);
+    const l = new Link(id, {
+      state: setLink,
+      view: (raw) => {
+        const view = normalize(raw);
+        // endsIn counts from now: turn it into a local deadline once, on receipt.
+        setSnap({ view, deadline: view.endsIn >= 0 ? performance.now() + view.endsIn : null });
+      },
+      err: (code) => {
+        const toast = { id: ++toastIds, text: tOr(`err_${code}`, t('err_unknown', { code })) };
+        setToasts((list) => [...list.slice(-2), toast]);
+        window.setTimeout(() => setToasts((list) => list.filter((x) => x !== toast)), TOAST_MS);
+      },
+      buzz,
+    });
+    linkRef.current = l;
     l.start();
     return () => l.stop();
   }, [id]);
 
+  const view = snap?.view;
+  const board = view?.board;
+  const gameRunning = !!view?.game;
+
+  // A new game (or its end) brings everyone back to their own screen.
+  useEffect(() => setTab('main'), [gameRunning]);
+
   useEffect(() => {
-    const poll = () =>
-      fetch('/api/status')
-        .then((r) => r.json())
-        .then(setBox)
-        .catch(() => setBox(null));
-    poll();
-    const timer = window.setInterval(poll, 5000);
-    return () => window.clearInterval(timer);
-  }, []);
+    if (!narrate || !board || !view || board.phaseId === spokenPhase.current) return;
+    spokenPhase.current = board.phaseId;
+    const text = narration(board, view);
+    if (text) speak(text, lang());
+  }, [narrate, board?.phaseId, board?.phase]);
 
   const chooseLang = (next: Lang) => {
-    saveLang(next);
     setLang(next);
+    document.documentElement.lang = next;
+    rerender(next);
   };
 
-  const testVibration = () => {
-    // iOS Safari has no Vibration API at all.
-    if (!('vibrate' in navigator)) return setVibe('vibeUnsupported');
-    setVibe(navigator.vibrate([200, 100, 200]) ? 'vibeSent' : 'vibeRefused');
+  const send: Send = (msg) => {
+    linkRef.current?.send(msg);
   };
 
-  const status = link?.status ?? 'connecting';
-  const resetKey = box ? `reset_${box.resetReason}` : '';
-  const uptimeS = box ? Math.floor(box.uptimeMs / 1000) : 0;
+  const ctx: AppCtx | null = snap && {
+    view: snap.view,
+    deadline: snap.deadline,
+    send,
+    narrate,
+    setNarrate: (on) => {
+      // Speaking inside the tap unlocks speech on iOS.
+      if (on && board && view) {
+        spokenPhase.current = board.phaseId;
+        const text = narration(board, view);
+        if (text) speak(text, lang());
+      }
+      setNarrate(on);
+    },
+  };
+
+  let content = null;
+  let tabs: Tab[] = [];
+  if (hash === '#diag') {
+    content = <Diag link={link} />;
+  } else if (view) {
+    if (view.me < 0 || editing) {
+      content = <ProfileScreen onDone={view.me >= 0 ? () => setEditing(false) : undefined} />;
+    } else {
+      const seated = !!view.game?.seated;
+      tabs = ['main'];
+      if (view.isAdmin && seated && board) tabs.push('table');
+      if (view.isAdmin) tabs.push('admin');
+      const current = tabs.includes(tab) ? tab : 'main';
+      content =
+        current === 'admin' ? (
+          <AdminTab opts={opts} setOpts={setOpts} />
+        ) : current === 'table' && board ? (
+          <Board board={board} />
+        ) : seated && view.game ? (
+          <GameScreen g={view.game} />
+        ) : (
+          <Lobby onEditProfile={() => setEditing(true)} />
+        );
+      if (tabs.length < 2) tabs = [];
+      else
+        content = (
+          <>
+            <nav class="tabs" role="tablist">
+              {tabs.map((x) => (
+                <button key={x} role="tab" aria-selected={x === current} onClick={() => setTab(x)}>
+                  {t(x === 'main' ? (seated ? 'tab_card' : 'tab_lobby') : x === 'table' ? 'tab_table' : 'tab_admin')}
+                </button>
+              ))}
+            </nav>
+            {content}
+          </>
+        );
+    }
+  }
+
+  const offline = hash !== '#diag' && (link.status !== 'open' || !view);
 
   return (
-    <main>
-      <header>
-        <div class="title-row">
+    <>
+      <main>
+        <header class="title-row">
           <h1>Party Games</h1>
           <div class="lang" role="group" aria-label="Language">
             {LANGS.map((l) => (
-              <button key={l} aria-pressed={l === lang} onClick={() => chooseLang(l)}>
+              <button key={l} aria-pressed={l === lang()} onClick={() => chooseLang(l)}>
                 {l.toUpperCase()}
               </button>
             ))}
           </div>
+        </header>
+        {ctx ? <Ctx.Provider value={ctx}>{content}</Ctx.Provider> : content}
+      </main>
+
+      {offline && (
+        <div class="overlay" role="status">
+          <div class="spinner" />
+          <strong>{t(link.status === 'open' ? 'status_connecting' : `status_${link.status}`)}</strong>
+          <p class="muted">{t('connectingHint')}</p>
         </div>
-        <p class="muted">{t('subtitle', { id: id.slice(0, 6) })}</p>
-      </header>
+      )}
 
-      <section class="card">
-        <div class={`pill ${status}`}>{t(`status_${status}`)}</div>
-        <dl>
-          <dt>{t('latency')}</dt>
-          <dd>{ms(link?.rttMs ?? null)}</dd>
-          <dt>{t('reconnects')}</dt>
-          <dd>{link?.reconnects ?? 0}</dd>
-          <dt>{t('lastGap')}</dt>
-          <dd>{ms(link?.lastGapMs ?? null)}</dd>
-          <dt>{t('resume')}</dt>
-          <dd>{ms(link?.resumeMs ?? null)}</dd>
-        </dl>
-      </section>
-
-      <section class="card">
-        <h2>{t('atTable', { n: link?.peers.length ?? 0 })}</h2>
-        <ul class="peers">
-          {link?.peers.map((p) => (
-            <li key={p.id} class={p.id === id ? 'me' : undefined}>
-              <span>{p.id.slice(0, 6)}</span>
-              <span class="muted">
-                {p.rtt >= 0 ? `${p.rtt} ms` : '–'} · {t('secondsAgo', { n: Math.round(p.age / 1000) })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section class="card">
-        <h2>{t('box')}</h2>
-        {box ? (
-          <dl>
-            <dt>{t('network')}</dt>
-            <dd>{box.ssid}</dd>
-            <dt>{t('wifiWs')}</dt>
-            <dd>
-              {box.stations} / {box.wsClients}
-            </dd>
-            <dt>{t('uptime')}</dt>
-            <dd>{t('duration', { h: Math.floor(uptimeS / 3600), m: Math.floor((uptimeS % 3600) / 60), s: uptimeS % 60 })}</dd>
-            <dt>{t('resetReason')}</dt>
-            <dd>{isKey(resetKey) ? t(resetKey) : t('resetCode', { n: box.resetReason })}</dd>
-            <dt>{t('ramFree')}</dt>
-            <dd>
-              {kb(box.heapFree)} ({kb(box.heapMin)})
-            </dd>
-            <dt>{t('psramFree')}</dt>
-            <dd>{box.psramTotal ? `${kb(box.psramFree)} / ${kb(box.psramTotal)}` : t('none')}</dd>
-            <dt>{t('version')}</dt>
-            <dd>{box.version}</dd>
-          </dl>
-        ) : (
-          <p class="muted">{t('statusUnavailable')}</p>
-        )}
-      </section>
-
-      <section class="card">
-        <h2>{t('vibration')}</h2>
-        <button class="primary" onClick={testVibration}>
-          {t('tryVibration')}
-        </button>
-        {vibe && <p class="muted">{t(vibe)}</p>}
-      </section>
-
-      <section class="card">
-        <h2>{t('events')}</h2>
-        <ol class="log">
-          {link?.log.map((e) => (
-            <li key={`${e.at}-${e.event}`}>
-              {new Date(e.at).toLocaleTimeString(lang)} {t(`log_${e.event}`, { ms: e.ms ?? '' })}
-            </li>
-          ))}
-        </ol>
-      </section>
-    </main>
+      <div class="toasts" aria-live="assertive">
+        {toasts.map((x) => (
+          <div key={x.id} class="toast" onClick={() => setToasts((list) => list.filter((y) => y !== x))}>
+            {x.text}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

@@ -14,31 +14,44 @@ TypeScript, UI in English (default) and Turkish. Design and rules:
 
 | File | Role | When it changes |
 |---|---|---|
-| `firmware/platformio.ini` | Env `esp32-s3`, platform `espressif32@6.13.0` (ESP-IDF 5.5.3), 8 MB flash, pre-script, `board_build.embed_files` | Embed list must match `src/CMakeLists.txt` |
-| `firmware/sdkconfig.defaults` | Capacity limits (16 DHCP leases, 0 ESP-NOW keys, 32 sockets), PSRAM, HTTP/WS | `max_open_sockets` in `http_server.cpp` must stay ≤ sockets − 4 |
-| `firmware/partitions.csv` | nvs, phy, 4 MB factory app | New partitions go into the flash plan in the design doc |
-| `firmware/CMakeLists.txt` | Project, `PROJECT_VER` (version on the status page) | — |
-| `firmware/src/CMakeLists.txt` | Sources, `EMBED_FILES` (`web/dist/*.html.gz`) | `_binary_*` symbols in `http_server.cpp`, `platformio.ini` embed list |
-| `firmware/src/config.h` | SSID prefix, Wi-Fi password, channel, 15 stations, origin address | Address in `web/public/portal.html`, docs |
-| `firmware/src/wifi_ap.*` | SoftAP, SSID = prefix + last 2 MAC bytes, station count | — |
+| `firmware/platformio.ini` | Envs: `esp32-s3` (default; `espressif32@6.13.0`, ESP-IDF 5.5.3, 8 MB flash, pre-script, `board_build.embed_files`), `native` (unit tests + bot simulators), `host` (stdio simulator) | Embed list must match `src/CMakeLists.txt` |
+| `firmware/sdkconfig.defaults` | Capacity limits (16 DHCP leases, 0 ESP-NOW keys, 32 sockets), PSRAM, HTTP/WS | `max_open_sockets` in `http_server.cpp` must stay ≤ sockets − 4 and = `Hub::kMaxConns` |
+| `firmware/partitions.csv` | nvs (24 KB: profiles, admin, room, game snapshot, Wi-Fi password), phy, 4 MB factory app | New partitions go into the flash plan in the design doc |
+| `firmware/CMakeLists.txt` | Project, `PROJECT_VER` (status page; CI sets it from the tag via `PG_VERSION`), excludes `esp_lcd` | — |
+| `firmware/src/CMakeLists.txt` | Sources (incl. `core/`, `games/`), `EMBED_FILES` (`web/dist/*.html.gz`) | New game sources; `_binary_*` symbols in `http_server.cpp`, `platformio.ini` embed list |
+| `firmware/src/config.h` | SSID prefix, default Wi-Fi password, channel, 15 stations, origin address | Address in `web/public/portal.html`, docs |
+| `firmware/src/wifi_ap.*` | SoftAP, SSID = prefix + last 2 MAC bytes, password from NVS `wifi_pass` or default, station count | — |
 | `firmware/src/dns_server.*` | Captive DNS: every A query → `192.168.4.1`, TTL 0 | — |
 | `firmware/src/http_server.*` | Pages, `/api/accept`, `/api/status`, OS connectivity probes, 404 → portal, MAC-keyed portal acceptance | New probe URL → `kProbes` |
-| `firmware/src/ws_hub.*` | `/ws`: hello/ping/presence, closes sockets silent for 15 s | `web/src/connection.ts` (same commit) |
-| `firmware/tools/build_web.py` | PlatformIO pre-script: builds `web/` on every firmware build | — |
+| `firmware/src/ws_hub.*` | `/ws` adapter: httpd sockets ↔ `core::Hub`, 250 ms tick, NVS store, platform (SSID, restart) | Protocol summary comment with `docs/protocol.md` |
+| `firmware/src/nvs_store.*`, `boot_button.*` | `Store` on NVS namespace `pg`; BOOT (GPIO0) held 5 s → admin reset | — |
+| `firmware/src/core/` | Portable logic (no ESP-IDF): `json` (writer/reader), `hub` (hello/ping, one socket per phone, idle close, view fan-out), `room` (profiles, lobby, admin, game host, snapshots), `game.h` (game interface), `rng.h`, `store.h` | `docs/protocol.md`, tests in `firmware/test/test_core` |
+| `firmware/src/games/` | `registry.*` (game list), `vampires.*` (Vampires & Villagers) | `docs/protocol.md`, `web/src/vampires.tsx`, tests in `firmware/test/test_vampires*` |
+| `firmware/src/host/main.cpp` | Host simulator: `core/` + `games/` over stdin/stdout lines, file store in `firmware/.pio/host-store` | `web/scripts/sim.mjs` |
+| `firmware/test/` | Unity tests: `test_core`, `test_vampires`, `test_vampires_sim` (5000 random bot games) | — |
+| `firmware/tools/build_web.py` | PlatformIO pre-script (esp32-s3 env): builds `web/` on every firmware build | — |
+| `web/src/connection.ts` | WebSocket client (hello, ping/pong timeout, backoff, `seq`, err/buzz), device id (`pg.clientId`; `?dev=<name>` = per-tab id) | `docs/protocol.md` |
+| `web/src/types.ts` | View types | `docs/protocol.md` |
+| `web/src/app.tsx` | Root: link, screen/tab routing, toasts, narration, `#diag` | — |
+| `web/src/{ui,profile,lobby,admin,board,vampires,diag,qr}.tsx`, `device.ts` | Shared widgets; screens; QR; keep-awake video, vibration/flash, speech | New game → its screen file |
 | `web/src/i18n.ts` | UI strings `en`/`tr`, language choice (`pg.lang`) | Portal's inline strings |
-| `web/src/connection.ts` | WebSocket client, device id (`pg.clientId`), pong timeout, timings | `ws_hub.h` |
-| `web/src/app.tsx` | Phase 0 connection test page | — |
 | `web/public/portal.html` | Captive portal page, bilingual, copied verbatim by Vite | `config.h` address, `i18n.ts` language rule |
 | `web/scripts/gzip.mjs` | `dist/*.html` → `.html.gz` | `EMBED_FILES` list |
+| `web/scripts/sim.mjs` | Box simulator: serves `dist/`, bridges `/ws` to the host build (`npm run sim`, port 7420) | `firmware/src/host/main.cpp` line protocol |
+| `.github/workflows/ci.yml` | Web build, native tests, host + firmware builds, merged `.bin`; on `v*` tags a Release + Pages flasher | Build commands |
+| `flasher/index.html` | ESP Web Tools page (GitHub Pages; manifest generated by CI) | — |
 | `docs/design.md` (+ `.tr.md`) | Design, add-on/pin plan, game rules | Translation in the same commit |
+| `docs/protocol.md` (+ `.tr.md`) | WebSocket protocol v1, view schema, game options | Firmware and web in the same commit |
+| `docs/add-a-game.md` (+ `.tr.md`), `CONTRIBUTING.md` (+ `.tr.md`) | Contributor guides | Translation in the same commit |
 | `docs/phase0-field-test.md` (+ `.tr.md`) | Phone field test steps and result tables | Translation in the same commit |
 | `docs/roadmap.md` (+ `.tr.md`) | Single source for phases, tasks, status and exit criteria | Tick tasks in the same commit as the work; translation too |
 | `docs/launch-plan.md` (+ `.tr.md`) | Launch prerequisites, channels and order | Translation in the same commit |
+| `docs/media/` | `hero.png` (README), `social-preview.png` (repo settings) | Regenerate from the simulator after UI changes |
 
 ## Contracts (single source)
 
 - **Origin:** `http://192.168.4.1` — `firmware/src/config.h`. Never a hostname (`localStorage` is per origin).
-- **WebSocket protocol:** `firmware/src/ws_hub.h`.
+- **WebSocket protocol:** `docs/protocol.md`.
 - **Capacity settings:** `firmware/sdkconfig.defaults`.
 - **Add-on pin plan:** `docs/design.md` section 4.
 - **Embedded files:** `firmware/src/CMakeLists.txt` `EMBED_FILES` ↔ `firmware/platformio.ini` `board_build.embed_files` ↔ `web/scripts/gzip.mjs`.
@@ -48,11 +61,17 @@ TypeScript, UI in English (default) and Turkish. Design and rules:
 
 ```sh
 cd firmware
-pio run                 # builds web/, embeds it, builds the firmware
+pio run                 # builds web/, embeds it, builds the firmware (env esp32-s3)
 pio run -t upload       # flash
 pio device monitor      # 115200
-cd ../web && npm run dev   # UI dev while this PC is on the box's Wi-Fi (proxy → 192.168.4.1)
+pio test -e native      # core + game unit tests, bot simulator (needs a host g++)
+pio run -e host         # host simulator binary
+cd ../web
+npm run sim             # box simulator on http://localhost:7420 (--fresh forgets state)
+PG_BOX=http://localhost:7420 npm run dev   # live UI against the simulator (default PG_BOX: the real box)
 ```
+
+Several players in one browser: open `http://localhost:7420/?dev=ada`, `?dev=bob`, … (per-tab ids).
 
 ## Watch out
 
@@ -60,5 +79,7 @@ cd ../web && npm run dev   # UI dev while this PC is on the box's Wi-Fi (proxy �
 - Moving the repo folder breaks the CMake cache: delete `firmware/.pio` and rebuild.
 - `CONFIG_LWIP_DHCPS_MAX_STATION_NUM` defaults to 8; lower it and the 9th phone gets no IP.
 - `CONFIG_ESP_WIFI_ESPNOW_MAX_ENCRYPT_NUM` > 2 and the SoftAP can no longer accept 15 stations (17 hardware keys in total).
-- All HTTP server state (client table, portal acceptance table) lives on the httpd task; other tasks touch it only through `httpd_queue_work`.
+- All HTTP server state (portal acceptance table, `Hub`, `Room`) lives on the httpd task; other tasks (timer, BOOT button) touch it only through `httpd_queue_work`.
 - Add-ons are optional: the firmware must boot without them and every game must be playable without them.
+- Snapshots are written at phase changes only: a power cut mid-phase restores the phase with its saved timer, but picks made during it are gone.
+- `.gitattributes` stores every text file with LF; a Windows clone made before it existed shows CRLF files as modified until re-checked out.

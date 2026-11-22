@@ -1,3 +1,4 @@
+#include "boot_button.h"
 #include "dns_server.h"
 #include "esp_event.h"
 #include "esp_heap_caps.h"
@@ -24,5 +25,6 @@ extern "C" void app_main() {
 
   wifi_ap::start();
   dns_server::start();
+  boot_button::start();
   http_server::start();
 }

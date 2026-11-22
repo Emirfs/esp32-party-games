@@ -10,17 +10,18 @@ results drive the reconnect, portal and power decisions of phase 1.
 1. `cd firmware && pio run -t upload && pio device monitor`
 2. The log should show `SoftAP "PartyGames-XXXX" up` and `listening on http://192.168.4.1`.
 3. Wi-Fi: `PartyGames-XXXX`, password `partygames`.
-4. Test page `http://192.168.4.1`: connection state, latency, reconnects,
-   "After screen on" time, players at the table, box status, event log.
+4. Test page `http://192.168.4.1/#diag` (the game opens at `http://192.168.4.1`;
+   the admin tab links to it): connection state, latency, reconnects, "After
+   screen on" time, box status, event log. Players at the table are in the lobby.
 
 ## Tests
 
 ### 1. Portal and staying on the network (per OS)
 
 - Join the network → does the sign-in sheet open by itself?
-- "Play" → does the test page open? Does the sheet show "Done"?
-- Does the page work **with mobile data on**? Does Android warn "limited connectivity" / "no internet", or leave the network?
-- After closing the browser and reopening `http://192.168.4.1`, is the "device" id the same (is the id persistent)?
+- "Play" → does the game open? Does the sheet show "Done"?
+- **With mobile data on**, does the page work? Does Android warn "limited connectivity" / "no internet", or leave the network?
+- After closing the browser and reopening `http://192.168.4.1`, does the phone go straight back to the lobby with its profile (is the id persistent)?
 
 ### 2. Screen lock and background
 

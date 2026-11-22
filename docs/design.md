@@ -86,9 +86,13 @@ recommended.
 
 ```
 firmware/   PlatformIO + ESP-IDF 5.5 (no Arduino, so sdkconfig limits can change)
-  src/      wifi_ap, dns_server, http_server, ws_hub; later core/ (session, profile, room, engine) and games/
+  src/      wifi_ap, dns_server, http_server, ws_hub (httpd adapter), nvs_store, boot_button
+  src/core/ json, hub (sockets ↔ players), room (profiles, lobby, admin, game host), game interface
+  src/games/ registry, vampires
+  src/host/ host simulator: core/ + games/ over stdin/stdout (UI work without a board)
+  test/     native unit tests and bot simulators (`pio test -e native`)
 web/        Vite + Preact + TS → one HTML file, gzipped → embedded in the firmware
-docs/       design, field tests
+docs/       design, protocol, field tests, roadmap
 ```
 
 - **The box is always right.** A phone states an intent (`act`, `vote`); the
@@ -97,19 +101,30 @@ docs/       design, field tests
   Nobody can cheat, and a reconnecting phone recovers with one message.
 - **Single-file web:** JS and CSS are inlined; a phone loads the UI over one TCP
   connection (the socket pool is small). The UI is embedded in the firmware, so
-  one `.bin` installs everything (later: flashing from the browser).
-- **Game module interface** (game logic depends on neither Arduino nor ESP-IDF and is tested on a PC):
+  one `.bin` installs everything, also straight from the browser (ESP Web Tools).
+- **Game module interface** (`firmware/src/core/game.h`; game logic depends on
+  neither Arduino nor ESP-IDF and is tested on a PC). Players are room seats
+  (`pid` 0–14), fixed for a whole game, so a game keeps plain pid-indexed state
+  that it snapshots with one `memcpy`:
 
 ```cpp
-struct Game {
-  virtual void setup(const PlayerList&, const Options&, Rng&) = 0;
-  virtual Result onAction(PlayerId, const Action&) = 0;   // invalid moves are rejected
-  virtual void onTimer(TimerId) = 0;
-  virtual void privateView(PlayerId, JsonObject out) const = 0;
-  virtual void boardView(JsonObject out) const = 0;       // table / admin tab
+class Game {
+  virtual const char* setup(PlayerMask players, const json::Value& options) = 0;
+  virtual const char* onAction(int pid, const json::Value& msg) = 0;  // error code or nullptr
+  virtual void onTimer() = 0;                                          // one phase timer
+  virtual const char* adminSkip() = 0;
+  virtual void privateView(int pid, json::Writer& out) const = 0;
+  virtual void boardView(json::Writer& out) const = 0;                 // table / admin tab
   virtual bool finished() const = 0;
+  virtual bool won(int pid) const = 0;
+  virtual std::string save() const = 0;                                // snapshot after every phase
+  virtual bool load(const uint8_t* data, size_t len) = 0;
 };
 ```
+
+  The room gives the game a `GameHost`: `rng()`, `setTimer(ms)`,
+  `phaseChanged()` (snapshot to NVS), `buzz(players, pattern)`, `online(pid)`.
+  Adding a game: [add-a-game.md](add-a-game.md).
 
 ## 6. Identity and dropouts
 
@@ -123,14 +138,17 @@ struct Game {
 
 ## 7. WebSocket messages
 
-The single source of the phase 0 protocol is `firmware/src/ws_hub.h`. Game messages (phase 1+):
+The single source is [protocol.md](protocol.md): every message, error code and
+the full view schema. In short:
 
 | Direction | Messages |
 |---|---|
-| Phone → box | `hello{id}` · `profile{name, avatar}` · `ready` · `start{game, options}` (admin) · `act{phaseId, kind, target}` · `vote{phaseId, target}` |
-| Box → phone | `view{seq, view}` · `buzz{pattern}` · `sound{id}` (admin / speaker) · `err{code}` |
+| Phone → box | `hello{id}` · `ping{c}` · `profile{name, avatar, color}` · `ready{on}` · `claimAdmin` · `transfer{pid}` · `kick{pid}` · `settings{wifiPass}` · `restart` · `start{game, options}` · `skip` · `end` · `ack{phaseId}` · `act{phaseId, target}` · `vote{phaseId, target}` |
+| Box → phone | `welcome{proto}` · `pong{c}` · `view{seq, view}` · `buzz{p}` · `err{code}` |
 
-`phaseId` rejects late moves; `seq` lets a phone drop stale views.
+`phaseId` rejects late moves; `seq` lets a phone drop stale views. Narration
+on the admin phone uses the browser's speech synthesis; the box speaker
+(`sound{id}`) comes with the optional add-on in phase 5.
 
 ## 8. Vampires & Villagers rules
 

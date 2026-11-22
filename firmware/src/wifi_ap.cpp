@@ -4,17 +4,20 @@
 #include <cstring>
 
 #include "config.h"
+#include "core/room.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
+#include "nvs_store.h"
 
 namespace wifi_ap {
 namespace {
 
 constexpr char kTag[] = "wifi_ap";
 char g_ssid[33];
+char g_pass[kWifiPassMax + 1];
 
 void on_wifi_event(void*, esp_event_base_t, int32_t id, void* data) {
   if (id == WIFI_EVENT_AP_STACONNECTED) {
@@ -45,7 +48,15 @@ void start() {
   wifi_config_t wc = {};
   memcpy(wc.ap.ssid, g_ssid, strlen(g_ssid));
   wc.ap.ssid_len = strlen(g_ssid);
-  strlcpy(reinterpret_cast<char*>(wc.ap.password), cfg::kApPassword, sizeof wc.ap.password);
+  // The admin can replace the printed default; it applies from the next boot.
+  char pass[kWifiPassMax + 1] = {};
+  NvsStore store;
+  if (store.load(kKeyWifiPass, pass, sizeof pass) > 0 && pass[kWifiPassMax] == '\0' &&
+      strlen(pass) >= kWifiPassMin)
+    strlcpy(g_pass, pass, sizeof g_pass);
+  else
+    strlcpy(g_pass, cfg::kApPassword, sizeof g_pass);
+  strlcpy(reinterpret_cast<char*>(wc.ap.password), g_pass, sizeof wc.ap.password);
   wc.ap.channel = cfg::kApChannel;
   wc.ap.authmode = WIFI_AUTH_WPA2_PSK;
   wc.ap.max_connection = cfg::kMaxStations;
@@ -59,6 +70,7 @@ void start() {
 }
 
 const char* ssid() { return g_ssid; }
+const char* password() { return g_pass; }
 
 int station_count() {
   wifi_sta_list_t list;

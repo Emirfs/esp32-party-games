@@ -82,9 +82,13 @@ parlaklığı yazılımda ~%20 ile sınırlanır; LED + hoparlör varsa pil öne
 
 ```
 firmware/   PlatformIO + ESP-IDF 5.5 (Arduino yok: sdkconfig sınırları değişebilsin diye)
-  src/      wifi_ap, dns_server, http_server, ws_hub; sonra core/ (oturum, profil, oda, motor) ve games/
+  src/      wifi_ap, dns_server, http_server, ws_hub (httpd bağdaştırıcısı), nvs_store, boot_button
+  src/core/ json, hub (soketler ↔ oyuncular), room (profil, lobi, yönetici, oyun sunucusu), oyun arayüzü
+  src/games/ registry, vampires
+  src/host/ ana makine simülatörü: core/ + games/ stdin/stdout üzerinden (kartsız arayüz geliştirme)
+  test/     native birim testleri ve bot simülatörleri (`pio test -e native`)
 web/        Vite + Preact + TS → tek HTML dosyası, gzip → firmware'e gömülür
-docs/       tasarım, saha testleri
+docs/       tasarım, protokol, saha testleri, yol haritası
 ```
 
 - **Kutu her zaman haklıdır.** Telefon niyet bildirir (`act`, `vote`); geçerliliğe
@@ -93,19 +97,30 @@ docs/       tasarım, saha testleri
   Hile yapılamaz, kopan telefon tek mesajla eski haline döner.
 - **Tek dosya web:** JS ve CSS HTML'e gömülü; telefon arayüzü tek TCP
   bağlantısıyla yükler (soket havuzu küçük). Arayüz firmware'e gömülür; tek
-  `.bin` ile kurulum (ileride tarayıcıdan flaşlama).
-- **Oyun modülü arayüzü** (oyun mantığı Arduino'ya/ESP-IDF'e bağlı değil, PC'de test edilir):
+  `.bin` ile kurulum, tarayıcıdan da (ESP Web Tools).
+- **Oyun modülü arayüzü** (`firmware/src/core/game.h`; oyun mantığı Arduino'ya
+  da ESP-IDF'e de bağlı değil, PC'de test edilir). Oyuncular odadaki koltuklardır
+  (`pid` 0–14) ve oyun boyunca değişmez; bu yüzden oyun durumu pid'e göre dizinli
+  düz bir yapıdır ve tek `memcpy` ile kaydedilir:
 
 ```cpp
-struct Game {
-  virtual void setup(const PlayerList&, const Options&, Rng&) = 0;
-  virtual Result onAction(PlayerId, const Action&) = 0;   // geçersiz hamle reddedilir
-  virtual void onTimer(TimerId) = 0;
-  virtual void privateView(PlayerId, JsonObject out) const = 0;
-  virtual void boardView(JsonObject out) const = 0;       // masa / yönetici sekmesi
+class Game {
+  virtual const char* setup(PlayerMask players, const json::Value& options) = 0;
+  virtual const char* onAction(int pid, const json::Value& msg) = 0;  // hata kodu ya da nullptr
+  virtual void onTimer() = 0;                                          // tek aşama sayacı
+  virtual const char* adminSkip() = 0;
+  virtual void privateView(int pid, json::Writer& out) const = 0;
+  virtual void boardView(json::Writer& out) const = 0;                 // masa / yönetici sekmesi
   virtual bool finished() const = 0;
+  virtual bool won(int pid) const = 0;
+  virtual std::string save() const = 0;                                // her aşamada anlık kayıt
+  virtual bool load(const uint8_t* data, size_t len) = 0;
 };
 ```
+
+  Oda oyuna bir `GameHost` verir: `rng()`, `setTimer(ms)`, `phaseChanged()`
+  (NVS'e kayıt), `buzz(players, pattern)`, `online(pid)`. Oyun ekleme:
+  [add-a-game.tr.md](add-a-game.tr.md).
 
 ## 6. Kimlik ve kopmalar
 
@@ -118,14 +133,17 @@ struct Game {
 
 ## 7. WebSocket mesajları
 
-Faz 0 protokolünün tek kaynağı `firmware/src/ws_hub.h`. Oyun mesajları (Faz 1+):
+Tek kaynak [protocol.tr.md](protocol.tr.md) (İngilizce asıl: [protocol.md](protocol.md)):
+tüm mesajlar, hata kodları ve görünümün tam şeması. Özetle:
 
 | Yön | Mesaj |
 |---|---|
-| Telefon → kutu | `hello{id}` · `profile{name, avatar}` · `ready` · `start{game, options}` (yönetici) · `act{phaseId, kind, target}` · `vote{phaseId, target}` |
-| Kutu → telefon | `view{seq, view}` · `buzz{pattern}` · `sound{id}` (yönetici / hoparlör) · `err{code}` |
+| Telefon → kutu | `hello{id}` · `ping{c}` · `profile{name, avatar, color}` · `ready{on}` · `claimAdmin` · `transfer{pid}` · `kick{pid}` · `settings{wifiPass}` · `restart` · `start{game, options}` · `skip` · `end` · `ack{phaseId}` · `act{phaseId, target}` · `vote{phaseId, target}` |
+| Kutu → telefon | `welcome{proto}` · `pong{c}` · `view{seq, view}` · `buzz{p}` · `err{code}` |
 
-`phaseId` geç gelen hamleyi reddeder; `seq` eski görünümü attırır.
+`phaseId` geç gelen hamleyi reddeder; `seq` eski görünümü attırır. Yönetici
+telefonundaki anlatım tarayıcının konuşma sentezini kullanır; kutu hoparlörü
+(`sound{id}`) Faz 5'teki isteğe bağlı eklentiyle gelir.
 
 ## 8. Vampir Köylü kuralları
 

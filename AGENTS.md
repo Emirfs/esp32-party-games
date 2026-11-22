@@ -7,5 +7,6 @@
 - Docs: English is the source of truth; a change to `X.md` updates its `X.tr.md` translation in the same commit.
 - Every add-on (speaker, LED ring, OLED, button, battery, NFC) stays optional: the firmware must boot and every game must be playable on a bare board plus phones.
 - The box is authoritative: game rules and hidden information live in the firmware; a phone only receives its own view.
-- A WebSocket protocol change updates `firmware/src/ws_hub.h` (source of truth) and `web/src/connection.ts` in the same commit.
+- Game logic (`firmware/src/core/`, `firmware/src/games/`) stays free of ESP-IDF so `pio test -e native` and the host simulator run it on a PC; every rule change keeps those tests green.
+- A WebSocket protocol change updates `docs/protocol.md` (source of truth, and its `.tr.md`), the firmware (`core/`, `games/`, the summary in `ws_hub.h`) and `web/` in the same commit.
 - Do not lower the capacity settings in `firmware/sdkconfig.defaults` (DHCP leases, sockets, ESP-NOW keys) without re-running the 15-phone test.
