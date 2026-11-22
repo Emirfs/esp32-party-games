@@ -1,0 +1,88 @@
+name: Bug report
+description: Something broke during setup or a game night.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! English please (Turkish is fine if you can't; we'll translate).
+        A serial log (`pio device monitor`, 115200 baud) helps a lot for crashes and reboots.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. 8 phones in the lobby, admin starts Vampires & Villagers
+        2. One phone locks its screen during the night
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Firmware version
+      description: Shown on the box's status page, or the release / commit you built.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Browser flasher (GitHub Pages)
+        - Release .bin with esptool
+        - Built from source (PlatformIO)
+        - Host simulator (no board)
+    validations:
+      required: true
+  - type: input
+    id: board
+    attributes:
+      label: Board
+      description: Model, flash/PSRAM size and any add-ons connected.
+      placeholder: ESP32-S3 DevKitC-1 N16R8, no add-ons
+    validations:
+      required: true
+  - type: input
+    id: power
+    attributes:
+      label: Power source
+      placeholder: Phone USB-C OTG / power bank / PC USB / LiPo
+  - type: textarea
+    id: phones
+    attributes:
+      label: Phones, OS and browsers
+      description: The phones involved, especially the ones that misbehaved.
+      placeholder: |
+        - Pixel 7, Android 16, Chrome 140 (admin)
+        - iPhone 13, iOS 26.1, Safari
+    validations:
+      required: true
+  - type: input
+    id: players
+    attributes:
+      label: Number of phones connected
+      placeholder: '9'
+  - type: input
+    id: language
+    attributes:
+      label: UI language
+      placeholder: English / Turkish
+  - type: textarea
+    id: logs
+    attributes:
+      label: Serial log or browser console
+      description: Paste the relevant part; it is formatted as code automatically.
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else

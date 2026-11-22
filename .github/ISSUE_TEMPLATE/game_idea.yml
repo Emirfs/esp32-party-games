@@ -1,0 +1,56 @@
+name: Game idea
+description: Propose a new party game for the box.
+labels: [game idea]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Good games for the box need a hidden or simultaneous element that phones make easy
+        (secret roles, secret answers, live votes) and stay fun with 4–15 people in one room.
+        Want to build it yourself? See [docs/add-a-game.md](https://github.com/Emirfs/esp32-party-games/blob/main/docs/add-a-game.md).
+  - type: input
+    id: name
+    attributes:
+      label: Game name
+      placeholder: Who's the Spy
+    validations:
+      required: true
+  - type: textarea
+    id: pitch
+    attributes:
+      label: How does it play?
+      description: Setup, phases and how it ends, in a few sentences. Link to existing rules if it is a known game.
+    validations:
+      required: true
+  - type: input
+    id: players
+    attributes:
+      label: Players
+      placeholder: 4–12
+    validations:
+      required: true
+  - type: input
+    id: length
+    attributes:
+      label: Length of one game
+      placeholder: 10 minutes
+  - type: textarea
+    id: hidden
+    attributes:
+      label: What does each phone see?
+      description: What is secret, who knows what, and what the admin's table view shows. The box keeps every secret.
+    validations:
+      required: true
+  - type: textarea
+    id: content
+    attributes:
+      label: Content it needs
+      description: Word lists, questions, prompts... and whether they work in both English and Turkish.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: Playable with phones only (add-ons like a speaker or LEDs are optional extras)
+          required: true
+        - label: I'd like to implement it myself

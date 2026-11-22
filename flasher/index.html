@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ESP32 Party Games — Flash from browser</title>
+    <meta
+      name="description"
+      content="Install ESP32 Party Games on an ESP32-S3 from your browser: offline party games, no app, no internet."
+    />
+    <!-- CI copies the merged firmware image and a generated manifest.json next to this file. -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #14121a;
+        --card: #1f1c28;
+        --fg: #f2eff8;
+        --muted: #9c95ad;
+        --accent: #a78bfa;
+        --warn: #facc15;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 38rem;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.75rem;
+      }
+      h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+      }
+      p {
+        margin: 0.25rem 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        background: #2a2636;
+        border-radius: 0.25rem;
+        padding: 0.05rem 0.3rem;
+        white-space: nowrap;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .card {
+        background: var(--card);
+        border-radius: 0.75rem;
+        padding: 1rem;
+      }
+      .lang {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.25rem;
+      }
+      button {
+        font: inherit;
+        font-weight: 700;
+        border: 0;
+        border-radius: 0.75rem;
+        cursor: pointer;
+      }
+      .lang button {
+        padding: 0.375rem 0.625rem;
+        background: var(--card);
+        color: var(--muted);
+      }
+      .lang button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .install {
+        text-align: center;
+      }
+      .install button {
+        font-size: 1.25rem;
+        width: 100%;
+        padding: 1rem;
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .install .warn {
+        color: var(--warn);
+      }
+      esp-web-install-button:not(:defined) > :not([slot='activate']) {
+        display: none;
+      }
+      ol {
+        margin: 0;
+        padding-left: 1.25rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+      .cmd {
+        overflow-x: auto;
+      }
+      footer {
+        text-align: center;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav class="lang" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="tr" aria-pressed="false">TR</button>
+      </nav>
+
+      <header>
+        <h1>ESP32 Party Games</h1>
+        <p class="muted" data-i18n="pitch">Jackbox-style party games with no app and no internet, on a $5 ESP32.</p>
+      </header>
+
+      <section class="card install">
+        <esp-web-install-button manifest="manifest.json">
+          <button slot="activate" type="button" data-i18n="install">Install</button>
+          <p slot="unsupported" class="warn" data-i18n="unsupported">
+            This browser cannot flash boards. Use Chrome or Edge on a desktop or laptop computer; Safari, Firefox and
+            phones do not support Web Serial.
+          </p>
+          <p slot="not-allowed" class="warn" data-i18n="notAllowed">
+            Flashing only works on an https:// page. Open https://emirfs.github.io/esp32-party-games/.
+          </p>
+        </esp-web-install-button>
+        <p class="muted" id="version" hidden></p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="stepsTitle">Steps</h2>
+        <ol>
+          <li data-i18n="step1">
+            Plug an ESP32-S3 board (8 MB flash or more) into this computer with a USB data cable.
+          </li>
+          <li data-i18n="step2">Open this page in Chrome or Edge on a desktop or laptop.</li>
+          <li data-i18n="step3">
+            Click <b>Install</b>, pick the board's serial port and wait about a minute. No port? Hold the BOOT button
+            while plugging the board in.
+          </li>
+          <li data-i18n="step4">
+            Power the board (a phone or power bank works). On every phone join the Wi-Fi <code>PartyGames-XXXX</code>
+            with password <code>partygames</code> and open <code>http://192.168.4.1</code>.
+          </li>
+          <li data-i18n="step5">
+            Everyone makes a profile; the first to tap <b>Become admin</b> starts Vampires &amp; Villagers.
+          </li>
+        </ol>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="manualTitle">Flash without a browser</h2>
+        <p data-i18n="manual">
+          Download <code>esp32-party-games-&lt;version&gt;.bin</code> from
+          <a href="https://github.com/Emirfs/esp32-party-games/releases/latest">Releases</a> and write it at offset 0:
+        </p>
+        <p class="cmd"><code>esptool.py --chip esp32s3 write_flash 0x0 esp32-party-games-&lt;version&gt;.bin</code></p>
+      </section>
+
+      <footer class="muted">
+        <a href="https://github.com/Emirfs/esp32-party-games">GitHub</a> ·
+        <span data-i18n="license">Open source, MIT license</span>
+      </footer>
+    </main>
+
+    <script>
+      // Same language rule and localStorage key as the box UI (web/src/i18n.ts):
+      // saved choice, else Turkish for a Turkish browser, else English.
+      const strings = {
+        en: {
+          title: 'ESP32 Party Games — Flash from browser',
+          pitch: 'Jackbox-style party games with no app and no internet, on a $5 ESP32.',
+          install: 'Install',
+          unsupported:
+            'This browser cannot flash boards. Use Chrome or Edge on a desktop or laptop computer; Safari, Firefox and phones do not support Web Serial.',
+          notAllowed: 'Flashing only works on an https:// page. Open https://emirfs.github.io/esp32-party-games/.',
+          version: 'Firmware {v}',
+          stepsTitle: 'Steps',
+          step1: 'Plug an ESP32-S3 board (8 MB flash or more) into this computer with a USB data cable.',
+          step2: 'Open this page in Chrome or Edge on a desktop or laptop.',
+          step3:
+            "Click <b>Install</b>, pick the board's serial port and wait about a minute. No port? Hold the BOOT button while plugging the board in.",
+          step4:
+            'Power the board (a phone or power bank works). On every phone join the Wi-Fi <code>PartyGames-XXXX</code> with password <code>partygames</code> and open <code>http://192.168.4.1</code>.',
+          step5: 'Everyone makes a profile; the first to tap <b>Become admin</b> starts Vampires &amp; Villagers.',
+          manualTitle: 'Flash without a browser',
+          manual:
+            'Download <code>esp32-party-games-&lt;version&gt;.bin</code> from <a href="https://github.com/Emirfs/esp32-party-games/releases/latest">Releases</a> and write it at offset 0:',
+          license: 'Open source, MIT license',
+        },
+        tr: {
+          title: 'ESP32 Party Games — Tarayıcıdan yükle',
+          pitch: "5 dolarlık bir ESP32'de, uygulamasız ve internetsiz Jackbox tarzı parti oyunları.",
+          install: 'Yükle',
+          unsupported:
+            "Bu tarayıcı karta yükleme yapamıyor. Masaüstü veya dizüstü bilgisayarda Chrome ya da Edge kullanın; Safari, Firefox ve telefonlar Web Serial'ı desteklemiyor.",
+          notAllowed: 'Yükleme yalnızca https:// sayfada çalışır. https://emirfs.github.io/esp32-party-games/ adresini açın.',
+          version: 'Firmware {v}',
+          stepsTitle: 'Adımlar',
+          step1: 'ESP32-S3 kartı (8 MB veya daha büyük flash) veri taşıyan bir USB kabloyla bu bilgisayara takın.',
+          step2: 'Bu sayfayı masaüstü veya dizüstü bilgisayarda Chrome ya da Edge ile açın.',
+          step3:
+            "<b>Yükle</b>'ye tıklayın, kartın seri portunu seçin ve yaklaşık bir dakika bekleyin. Port görünmüyor mu? Kartı takarken BOOT düğmesini basılı tutun.",
+          step4:
+            'Karta güç verin (telefon veya powerbank yeterli). Her telefonda <code>PartyGames-XXXX</code> Wi-Fi ağına <code>partygames</code> şifresiyle bağlanın ve <code>http://192.168.4.1</code> adresini açın.',
+          step5: "Herkes profilini oluşturur; <b>Yönetici ol</b>'a ilk dokunan Vampir Köylü'yü başlatır.",
+          manualTitle: 'Tarayıcı olmadan yükleme',
+          manual:
+            '<a href="https://github.com/Emirfs/esp32-party-games/releases/latest">Releases</a> sayfasından <code>esp32-party-games-&lt;sürüm&gt;.bin</code> dosyasını indirip 0 adresine yazın:',
+          license: 'Açık kaynak, MIT lisansı',
+        },
+      };
+
+      let lang = 'en';
+      let version = '';
+
+      function pickLang() {
+        let saved = null;
+        try {
+          saved = localStorage.getItem('pg.lang');
+        } catch {}
+        if (saved === 'en' || saved === 'tr') return saved;
+        return (navigator.language || '').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+      }
+
+      function render() {
+        const t = strings[lang];
+        document.documentElement.lang = lang;
+        document.title = t.title;
+        for (const el of document.querySelectorAll('[data-i18n]')) el.innerHTML = t[el.dataset.i18n];
+        for (const b of document.querySelectorAll('[data-lang]'))
+          b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+        const v = document.getElementById('version');
+        v.hidden = !version;
+        v.textContent = t.version.replace('{v}', version);
+      }
+
+      for (const b of document.querySelectorAll('[data-lang]')) {
+        b.addEventListener('click', () => {
+          lang = b.dataset.lang;
+          try {
+            localStorage.setItem('pg.lang', lang);
+          } catch {}
+          render();
+        });
+      }
+
+      lang = pickLang();
+      render();
+
+      // manifest.json exists only on the published site (CI generates it); opened
+      // from disk the version line stays hidden.
+      if (location.protocol !== 'file:') {
+        fetch('manifest.json')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((m) => {
+            if (m && m.version) {
+              version = m.version;
+              render();
+            }
+          })
+          .catch(() => {});
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Browser flasher
+    url: https://emirfs.github.io/esp32-party-games/
+    about: Install the latest release on an ESP32-S3 from Chrome or Edge.
+  - name: Contributing guide
+    url: https://github.com/Emirfs/esp32-party-games/blob/main/CONTRIBUTING.md
+    about: Setup, repo rules, tests and the pull request checklist.

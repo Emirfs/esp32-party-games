@@ -1,0 +1,186 @@
+# Every push and PR: web build, native unit tests + bot simulator, host
+# simulator, ESP32-S3 firmware (with a merged, flashable image as an artifact).
+# A `v*` tag additionally publishes a GitHub Release and the browser flasher
+# on GitHub Pages.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  NODE_VERSION: '22'
+  # PlatformIO's ESP-IDF builder cannot install its packages on Python 3.14.
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('web/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - run: npm run build
+
+  native:
+    name: Native tests and host simulator
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-native-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+      - run: pip install --upgrade platformio
+      - name: Unit tests and bot simulator
+        run: pio test -e native
+      - name: Host simulator
+        run: pio run -e host
+
+  firmware:
+    name: ESP32-S3 firmware
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image: ${{ steps.version.outputs.image }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: web/node_modules
+          key: node-modules-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('web/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        working-directory: web
+        run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-esp32-s3-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+      - run: pip install --upgrade platformio 'esptool>=4.8,<5'
+      - id: version
+        name: Version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="$GITHUB_REF_NAME"
+            # firmware/CMakeLists.txt uses it as PROJECT_VER (status page).
+            echo "PG_VERSION=${version#v}" >> "$GITHUB_ENV"
+          else
+            version="dev-${GITHUB_SHA::7}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "image=esp32-party-games-$version.bin" >> "$GITHUB_OUTPUT"
+      - name: Build (web is rebuilt and embedded by tools/build_web.py)
+        working-directory: firmware
+        run: pio run -e esp32-s3
+      - name: Merge bootloader, partition table and app
+        run: |
+          build=firmware/.pio/build/esp32-s3
+          mkdir -p out
+          esptool.py --chip esp32s3 merge_bin \
+            -o "out/${{ steps.version.outputs.image }}" \
+            --flash_mode keep --flash_freq keep --flash_size 8MB \
+            0x0 "$build/bootloader.bin" \
+            0x8000 "$build/partitions.bin" \
+            0x10000 "$build/firmware.bin"
+          cp "$build/firmware.bin" out/firmware.bin
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: out/
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [web, native, firmware]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: out
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ESP32 Party Games ${{ needs.firmware.outputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            out/${{ needs.firmware.outputs.image }}
+            out/firmware.bin
+
+  pages:
+    name: Browser flasher (GitHub Pages)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release, firmware]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: out
+      - name: Assemble site
+        env:
+          VERSION: ${{ needs.firmware.outputs.version }}
+          IMAGE: ${{ needs.firmware.outputs.image }}
+        run: |
+          mkdir -p site
+          cp -r flasher/. site/
+          cp "out/$IMAGE" site/
+          jq -n --arg version "$VERSION" --arg image "$IMAGE" '{
+            name: "ESP32 Party Games",
+            version: $version,
+            new_install_prompt_erase: true,
+            builds: [{chipFamily: "ESP32-S3", parts: [{path: $image, offset: 0}]}]
+          }' > site/manifest.json
+          cat site/manifest.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
