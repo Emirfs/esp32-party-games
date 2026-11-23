@@ -13,7 +13,7 @@ Fazların, görevlerinin ve bitiş ölçütlerinin tek kaynağı. Tasarım ve ku
 | 0 | Bağlantı: AP, captive portal, WebSocket test sayfası (artık `#diag`) | Kod bitti, saha testi açık |
 | 1 | Lobi, profiller, yönetici, oyun motoru iskeleti | Kod bitti; bitiş kontrolü gerçek telefon ister |
 | 2 | Vampir Köylü | Kod bitti, simülatör geçiyor; gerçek oyun açık |
-| 3 | Dağıtım: tarayıcıdan yükleme, sürümler, README | Kod bitti; issue'lar, `main` ve ilk etiket açık |
+| 3 | Dağıtım: tarayıcıdan yükleme, sürümler, README | Kod bitti; varsayılan dal `main`; issue'lar ve ilk etiket açık |
 | 4 | Duyuru | Başlanmadı |
 | 5 | İsteğe bağlı eklentiler | Başlanmadı |
 | 6 | Yeni oyunlar | Başlanmadı |
@@ -72,7 +72,7 @@ kilit/açılışta her oyuncunun kimliği korunur; elektrik kesilince herkes ayn
 - [x] README: en üstte kapak görseli (`docs/media/hero.png`), 2 dakikalık hızlı başlangıç, paylaşım kapak görseli (`docs/media/social-preview.png`, depo ayarlarından seçilir); gerçek masa videosu duyuru çekimiyle gelir
 - [x] `CONTRIBUTING.md`, "Kendi oyununu ekle" rehberi ([add-a-game.tr.md](add-a-game.tr.md))
 - [ ] GitHub'da birkaç `good first issue`
-- [ ] Özellik dalını `main`'e birleştir ve `main`'i varsayılan dal yap
+- [x] Özellik dalını `main`'e birleştir ve `main`'i varsayılan dal yap
 
 **Bitiş:** boş bir kart yalnızca tarayıcıyla kurulur.
 

@@ -13,7 +13,7 @@ before the launch (phase 4); add-ons and new games come after it.
 | 0 | Connectivity: AP, captive portal, WebSocket test page (now `#diag`) | Code done, field test open |
 | 1 | Lobby, profiles, admin, game engine skeleton | Code done; exit check needs real phones |
 | 2 | Vampires & Villagers | Code done, simulator passes; real game open |
-| 3 | Distribution: browser flasher, releases, README | Code done; issues, `main` and first tag open |
+| 3 | Distribution: browser flasher, releases, README | Code done; `main` is the default branch; issues and first tag open |
 | 4 | Launch | Not started |
 | 5 | Optional add-ons | Not started |
 | 6 | More games | Not started |
@@ -72,7 +72,7 @@ lock/unlock keeps each player's identity; a power cut returns everyone to the sa
 - [x] README: hero image at the top (`docs/media/hero.png`), 2-minute quick start, social preview image (`docs/media/social-preview.png`, set it in the repo settings); the real-table video comes with the launch filming
 - [x] `CONTRIBUTING.md`, "Add your own game" guide ([add-a-game.md](add-a-game.md))
 - [ ] A few `good first issue`s on GitHub
-- [ ] Merge the feature branch into `main` and make `main` the default branch
+- [x] Merge the feature branch into `main` and make `main` the default branch
 
 **Exit:** a blank board is set up with nothing but a browser.
 
